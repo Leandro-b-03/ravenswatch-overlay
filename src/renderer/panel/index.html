@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ravenswatch Overlay — Control Panel</title>
+    <link rel="stylesheet" href="./panel.css" />
+  </head>
+  <body>
+    <header>
+      <h1>RAVENSWATCH <span>OVERLAY</span></h1>
+      <nav>
+        <button data-tab="builds" class="active">My Builds</button>
+        <button data-tab="browse">Browse</button>
+        <button data-tab="editor">Editor</button>
+        <button data-tab="calibration">Calibration</button>
+        <button data-tab="settings">Settings</button>
+      </nav>
+      <div id="detection-controls">
+        <span id="detection-state" class="off">detection off</span>
+        <button id="btn-detection-toggle">Start detection</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- My Builds -->
+      <section id="tab-builds" class="tab active">
+        <div class="row">
+          <input id="import-url" type="text" placeholder="Paste a buildmaker.ravenswatch.com/build/… link" />
+          <button id="btn-import">Import</button>
+        </div>
+        <div id="import-status" class="status"></div>
+        <div id="builds-list" class="card-grid"></div>
+      </section>
+
+      <!-- Browse community builds -->
+      <section id="tab-browse" class="tab">
+        <div class="row">
+          <select id="browse-hero"></select>
+          <button id="btn-browse-prev">◀</button>
+          <span id="browse-page">1</span>
+          <button id="btn-browse-next">▶</button>
+        </div>
+        <div id="browse-status" class="status"></div>
+        <div id="browse-list" class="card-grid"></div>
+      </section>
+
+      <!-- Manual editor -->
+      <section id="tab-editor" class="tab">
+        <div class="row">
+          <select id="editor-hero"></select>
+          <input id="editor-title" type="text" placeholder="Build title" />
+          <button id="btn-editor-save">Save build</button>
+        </div>
+        <div id="editor-status" class="status"></div>
+        <div class="editor-cols">
+          <div>
+            <h3>Talent catalog <small>(click to add)</small></h3>
+            <div id="editor-catalog" class="talent-list"></div>
+          </div>
+          <div>
+            <h3>Priority order <small>(click to remove, drag to reorder)</small></h3>
+            <div id="editor-picks" class="talent-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Calibration -->
+      <section id="tab-calibration" class="tab">
+        <div class="row">
+          <button id="btn-cal-refresh">Find game window</button>
+          <select id="cal-source"></select>
+          <select id="cal-cards">
+            <option value="3">3 cards</option>
+            <option value="2">2 cards</option>
+            <option value="4">4 cards</option>
+          </select>
+          <button id="btn-cal-save" disabled>Save region</button>
+        </div>
+        <div id="cal-status" class="status">
+          Start the game, click “Find game window”, then drag a box over the area where the talent
+          cards appear.
+        </div>
+        <div id="cal-stage">
+          <video id="cal-video" autoplay muted></video>
+          <canvas id="cal-canvas"></canvas>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="tab-settings" class="tab">
+        <div class="settings-block">
+          <label for="setting-language">Game language</label>
+          <select id="setting-language"></select>
+          <div id="language-warning" class="status"></div>
+        </div>
+        <div class="settings-block">
+          <h3>Hotkeys</h3>
+          <table class="hotkeys">
+            <tr><td>Ctrl+Shift+O</td><td>Toggle overlay interactive mode</td></tr>
+            <tr><td>Ctrl+Shift+S</td><td>Scan talent screen once</td></tr>
+            <tr><td>Ctrl+Shift+P</td><td>Open this control panel</td></tr>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./panel.ts"></script>
+  </body>
+</html>

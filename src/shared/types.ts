@@ -1,0 +1,139 @@
+// Shared types between main, preload, and all renderers.
+
+export type TalentType = 'starting' | 'normal' | 'ultimate' | string
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'cursed' | string
+
+export interface Talent {
+  id: string
+  name: string
+  type: TalentType
+  rarity: Rarity
+  iconUrl: string
+  descriptions: string[]
+}
+
+export interface Hero {
+  name: string
+  raw_name: string
+  description: string
+  icon: string
+  talents?: Talent[]
+}
+
+// Raw shape of the game-heroes endpoint's skill entries.
+export interface HeroSkill {
+  id: string
+  name: string
+  tier: number
+  icon: string
+  descriptions: string[]
+}
+
+export function heroSkillsToTalents(skills: HeroSkill[] | undefined): Talent[] {
+  return (skills ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    type: `tier-${s.tier}`,
+    rarity: 'common',
+    iconUrl: s.icon,
+    descriptions: s.descriptions ?? []
+  }))
+}
+
+export interface GameItem {
+  id: string
+  name: string
+  description: string
+  rarity?: Rarity
+  iconUrl?: string
+}
+
+export interface BuildItemRef {
+  id: string
+  quantity: number
+}
+
+export interface Build {
+  id: string
+  source: 'buildmaker' | 'manual'
+  sourceUrl?: string
+  hero: string
+  title: string
+  author?: string
+  description?: string
+  talents: Talent[]
+  items: BuildItemRef[]
+  notes?: string
+}
+
+export interface CommunityBuildSummary {
+  _id: string
+  hero: string
+  title: string
+  talents: Talent[]
+  user?: { username: string }
+  likes?: string[]
+  version?: string
+}
+
+export interface CalibrationRegion {
+  // Region in game-window coordinates where talent cards appear.
+  x: number
+  y: number
+  width: number
+  height: number
+  cardCount: number
+  // Resolution of the capture this was calibrated against.
+  captureWidth: number
+  captureHeight: number
+}
+
+export interface Settings {
+  gameLanguage: string
+  activeBuildId: string | null
+  detectionEnabled: boolean
+  overlayPosition: { x: number; y: number } | null
+  calibrations: Record<string, CalibrationRegion> // key: `${w}x${h}`
+}
+
+export type OverlayState =
+  | { kind: 'waiting'; heroName: string | null; buildTitle: string | null }
+  | { kind: 'detected'; picks: DetectedPick[]; region: CalibrationRegion }
+  | { kind: 'no-match'; region: CalibrationRegion }
+
+export interface DetectedPick {
+  cardIndex: number
+  talentName: string
+  priorityRank: number // 1-based position in the build's talent order
+}
+
+export interface OcrCardResult {
+  cardIndex: number
+  text: string
+}
+
+export interface MatchResult {
+  cardIndex: number
+  talent: Talent | null
+  score: number
+  inBuild: boolean
+  priorityRank: number | null
+}
+
+export interface CaptureSource {
+  id: string
+  name: string
+  thumbnailDataUrl: string
+}
+
+// Languages the BuildMaker API localizes talent names for (verified: en/fr/es;
+// de assumed — the app detects English fallback at runtime and warns).
+export const SUPPORTED_LANGUAGES: { code: string; label: string; tesseract: string }[] = [
+  { code: 'en', label: 'English', tesseract: 'eng' },
+  { code: 'fr', label: 'Français', tesseract: 'fra' },
+  { code: 'es', label: 'Español', tesseract: 'spa' },
+  { code: 'de', label: 'Deutsch', tesseract: 'deu' },
+  { code: 'it', label: 'Italiano', tesseract: 'ita' },
+  { code: 'pl', label: 'Polski', tesseract: 'pol' },
+  { code: 'ru', label: 'Русский', tesseract: 'rus' }
+]

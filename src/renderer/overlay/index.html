@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ravenswatch Overlay</title>
+    <link rel="stylesheet" href="./overlay.css" />
+  </head>
+  <body>
+    <div id="interactive-border"></div>
+
+    <div id="hud">
+      <div id="hud-header">
+        <span id="hero-name">No build</span>
+        <span id="mode-badge">click-through</span>
+      </div>
+      <div id="build-title">select a build in the control panel</div>
+      <div id="hud-timer">
+        <span id="phase-label">Day</span>
+        <span id="phase-count">1</span>
+        <span id="phase-clock">00:00</span>
+      </div>
+      <div id="detection-status" class="idle">waiting for talent choice…</div>
+    </div>
+
+    <div id="pick-banner" class="hidden">
+      <div id="pick-content"></div>
+    </div>
+
+    <script type="module" src="./overlay.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,327 @@
+:root {
+  --bg: #16121c;
+  --bg2: #1f1a28;
+  --card: #251e30;
+  --gold: #ffcc33;
+  --text: #f1e9d8;
+  --muted: #a89f8f;
+  --green: #7fd67f;
+  --red: #e0705f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid rgba(255, 204, 51, 0.25);
+}
+
+h1 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+h1 span {
+  color: var(--gold);
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+}
+
+nav button {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+nav button:hover {
+  color: var(--text);
+}
+
+nav button.active {
+  background: var(--card);
+  color: var(--gold);
+}
+
+#detection-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#detection-state {
+  font-size: 12px;
+}
+
+#detection-state.off {
+  color: var(--muted);
+}
+
+#detection-state.on {
+  color: var(--green);
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.tab {
+  display: none;
+}
+
+.tab.active {
+  display: block;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+input[type='text'],
+select {
+  background: var(--card);
+  border: 1px solid rgba(255, 204, 51, 0.25);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+input#import-url {
+  flex: 1;
+}
+
+input#editor-title {
+  flex: 1;
+}
+
+button {
+  background: var(--card);
+  border: 1px solid rgba(255, 204, 51, 0.35);
+  color: var(--gold);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover:not(:disabled) {
+  background: #2e2540;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.status {
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.status.error {
+  color: var(--red);
+}
+
+.status.ok {
+  color: var(--green);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.build-card {
+  background: var(--card);
+  border: 1px solid rgba(255, 204, 51, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.build-card.active-build {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.build-card h4 {
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+
+.build-card .meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.talent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.talent-chips span {
+  background: rgba(255, 204, 51, 0.12);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 7px;
+  color: #e8d9ae;
+}
+
+.talent-chips span.rarity-legendary {
+  background: rgba(255, 160, 40, 0.25);
+}
+
+.talent-chips span.rarity-cursed {
+  background: rgba(160, 60, 200, 0.25);
+}
+
+.build-card .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.build-card .actions button {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.editor-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.editor-cols h3 {
+  font-size: 14px;
+  margin: 4px 0 8px;
+}
+
+.editor-cols small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.talent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.talent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.talent-row:hover {
+  border-color: rgba(255, 204, 51, 0.4);
+}
+
+.talent-row img {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.talent-row .t-name {
+  font-size: 13px;
+}
+
+.talent-row .t-meta {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.talent-row .t-rank {
+  color: var(--gold);
+  font-weight: 700;
+  width: 22px;
+  text-align: right;
+}
+
+#cal-stage {
+  position: relative;
+  max-width: 100%;
+}
+
+#cal-video {
+  display: none;
+}
+
+#cal-canvas {
+  max-width: 100%;
+  border: 1px solid rgba(255, 204, 51, 0.3);
+  border-radius: 8px;
+  cursor: crosshair;
+}
+
+.settings-block {
+  max-width: 480px;
+  margin-bottom: 26px;
+}
+
+.settings-block label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+.hotkeys td {
+  padding: 4px 16px 4px 0;
+  color: var(--muted);
+}
+
+.hotkeys td:first-child {
+  color: var(--gold);
+  font-family: Consolas, monospace;
+}
