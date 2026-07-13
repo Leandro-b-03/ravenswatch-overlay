@@ -182,11 +182,61 @@ window.overlayAPI.onDetectionNote((key) => {
   detectionStatus.className = key === 'note.active' ? 'active' : 'idle'
 })
 
+// Maps a card's rect from game-capture coordinates onto this overlay window.
+// In borderless windowed mode the game covers the screen, so scaling by the
+// capture→window ratio lands the highlight on the actual card.
+function cardRect(
+  region: { x: number; y: number; width: number; height: number; cardCount: number; captureWidth: number; captureHeight: number },
+  cardIndex: number
+): { left: number; top: number; width: number; height: number } {
+  const sx = window.innerWidth / region.captureWidth
+  const sy = window.innerHeight / region.captureHeight
+  const cardW = region.width / region.cardCount
+  return {
+    left: (region.x + cardIndex * cardW) * sx,
+    top: region.y * sy,
+    width: cardW * sx,
+    height: region.height * sy
+  }
+}
+
+const cardHighlights = $<HTMLDivElement>('card-highlights')
+
+function clearHighlights(): void {
+  cardHighlights.innerHTML = ''
+}
+
+function highlightCard(
+  region: Parameters<typeof cardRect>[0],
+  cardIndex: number,
+  rank: number | null
+): void {
+  const rect = cardRect(region, cardIndex)
+  const el = document.createElement('div')
+  el.className = 'card-highlight' + (rank === null ? ' muted-card' : '')
+  el.style.left = `${rect.left}px`
+  el.style.top = `${rect.top}px`
+  el.style.width = `${rect.width}px`
+  el.style.height = `${rect.height}px`
+  if (rank !== null) {
+    const arrow = document.createElement('div')
+    arrow.className = 'ch-arrow'
+    arrow.textContent = '▼'
+    el.appendChild(arrow)
+    const badge = document.createElement('div')
+    badge.className = 'ch-rank'
+    badge.textContent = `★ #${rank}`
+    el.appendChild(badge)
+  }
+  cardHighlights.appendChild(el)
+}
+
 window.overlayAPI.onOverlayState((state) => {
   if (state.kind === 'waiting') {
     heroName.textContent = state.heroName ?? t('ov.noBuild')
     buildTitle.textContent = state.buildTitle ?? t('ov.selectBuild')
     pickBanner.classList.add('hidden')
+    clearHighlights()
     setTips(state.tips ?? [])
     return
   }
@@ -196,6 +246,7 @@ window.overlayAPI.onOverlayState((state) => {
     detectionStatus.className = 'active'
     const sorted = [...state.picks].sort((a, b) => a.priorityRank - b.priorityRank)
     pickContent.innerHTML = ''
+    clearHighlights()
     for (const pick of sorted) {
       const line = document.createElement('div')
       line.className = 'pick-line'
@@ -205,6 +256,7 @@ window.overlayAPI.onOverlayState((state) => {
       rank.textContent = t('ov.rank', { n: pick.priorityRank })
       line.appendChild(rank)
       pickContent.appendChild(line)
+      highlightCard(state.region, pick.cardIndex, pick.priorityRank)
     }
     pickBanner.classList.remove('hidden')
     return
@@ -214,6 +266,7 @@ window.overlayAPI.onOverlayState((state) => {
   detectionStatus.textContent = t('ov.detected')
   detectionStatus.className = 'active'
   pickContent.innerHTML = ''
+  clearHighlights()
   const line = document.createElement('div')
   line.className = 'pick-line muted'
   line.textContent = t('ov.reroll')

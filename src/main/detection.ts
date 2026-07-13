@@ -13,7 +13,9 @@ import { buildTips } from '../shared/tips'
 // prerequisites exist) and reports what is missing to the overlay status line.
 
 const CLEAR_AFTER_EMPTY_TICKS = 3
-const SCAN_INTERVAL_MS = 1000
+// Static frames are skipped via a cheap hash in the worker, so a faster tick
+// only costs work when the screen actually changes.
+const SCAN_INTERVAL_MS = 600
 const WATCH_INTERVAL_MS = 10000
 
 interface DetectionDeps {

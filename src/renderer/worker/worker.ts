@@ -1,8 +1,13 @@
 // Hidden detection worker: captures the game window, preprocesses the
 // calibrated talent region, OCRs each card, fuzzy-matches against the hero
 // catalog, and reports MatchResults back to main.
+//
+// Latency notes: cards are OCRed in parallel via a tesseract scheduler, card
+// crops are scaled to a fixed target width instead of a blanket 2x upscale
+// (at 1440p+ that upscale tripled OCR time for no accuracy gain), and a
+// cheap frame hash skips OCR entirely while the region is unchanged.
 
-import { createWorker, type Worker as TesseractWorker } from 'tesseract.js'
+import { createScheduler, createWorker, type Scheduler } from 'tesseract.js'
 import { matchCard } from '../../shared/matching'
 import { preprocessPixels } from '../../shared/preprocess'
 import type {
@@ -11,6 +16,9 @@ import type {
   MatchResult,
   Talent
 } from '../../shared/types'
+
+const OCR_WORKERS = 3
+const TARGET_CARD_WIDTH = 480 // px fed to tesseract per card
 
 const video = document.getElementById('capture-video') as HTMLVideoElement
 
@@ -23,13 +31,16 @@ interface WorkerConfig {
 }
 
 let config: WorkerConfig | null = null
-let ocr: TesseractWorker | null = null
+let scheduler: Scheduler | null = null
 let ocrLang = ''
 let stream: MediaStream | null = null
 let busy = false
+let lastFrameHash = ''
+let lastHadMatches = false
 
 window.overlayAPI.onWorkerConfigure(async (cfg) => {
   config = cfg
+  lastFrameHash = ''
   try {
     await Promise.all([ensureStream(cfg.sourceId), ensureOcr(cfg.tesseractLang)])
     window.overlayAPI.sendWorkerReady()
@@ -53,7 +64,7 @@ window.overlayAPI.onWorkerScan(async () => {
 
 async function ensureStream(sourceId: string): Promise<void> {
   if (stream) {
-    stream.getTracks().forEach((t) => t.stop())
+    stream.getTracks().forEach((track) => track.stop())
     stream = null
   }
   // Electron routes desktop capture through getUserMedia with mandatory
@@ -75,9 +86,13 @@ async function ensureStream(sourceId: string): Promise<void> {
 }
 
 async function ensureOcr(lang: string): Promise<void> {
-  if (ocr && ocrLang === lang) return
-  if (ocr) await ocr.terminate()
-  ocr = await createWorker(lang)
+  if (scheduler && ocrLang === lang) return
+  if (scheduler) await scheduler.terminate()
+  scheduler = createScheduler()
+  const workers = await Promise.all(
+    Array.from({ length: OCR_WORKERS }, () => createWorker(lang))
+  )
+  for (const w of workers) scheduler.addWorker(w)
   ocrLang = lang
 }
 
@@ -104,8 +119,23 @@ function pickCalibration(w: number, h: number): CalibrationRegion | null {
   }
 }
 
+// Tiny grayscale signature of the region — used to skip OCR on static frames.
+function frameHash(region: CalibrationRegion): string {
+  const c = document.createElement('canvas')
+  c.width = 48
+  c.height = 12
+  const ctx = c.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(video, region.x, region.y, region.width, region.height, 0, 0, 48, 12)
+  const px = ctx.getImageData(0, 0, 48, 12).data
+  let hash = ''
+  for (let i = 0; i < px.length; i += 16) {
+    hash += ((px[i] + px[i + 1] + px[i + 2]) >> 6).toString(36)
+  }
+  return hash
+}
+
 async function scan(): Promise<{ matches: MatchResult[]; region: CalibrationRegion } | null> {
-  if (!config || !ocr) return null
+  if (!config || !scheduler) return null
   const w = video.videoWidth
   const h = video.videoHeight
   if (!w || !h) return null
@@ -113,30 +143,38 @@ async function scan(): Promise<{ matches: MatchResult[]; region: CalibrationRegi
   const region = pickCalibration(w, h)
   if (!region) return null
 
-  const matches: MatchResult[] = []
-  const cardWidth = region.width / region.cardCount
-
-  for (let i = 0; i < region.cardCount; i++) {
-    const canvas = preprocess(
-      region.x + Math.round(i * cardWidth),
-      region.y,
-      Math.round(cardWidth),
-      region.height
-    )
-    const { data } = await ocr.recognize(canvas)
-    matches.push(matchCard(i, data.text, config.catalog, config.build))
+  // Static frame? Nothing to re-OCR. Report empty only if the last real scan
+  // also had no matches (keeps the empty-tick debounce in main honest).
+  const hash = frameHash(region)
+  if (hash === lastFrameHash) {
+    return lastHadMatches ? null : { matches: [], region }
   }
+  lastFrameHash = hash
+
+  const cardWidth = region.width / region.cardCount
+  const canvases: HTMLCanvasElement[] = []
+  for (let i = 0; i < region.cardCount; i++) {
+    canvases.push(
+      preprocess(region.x + Math.round(i * cardWidth), region.y, Math.round(cardWidth), region.height)
+    )
+  }
+
+  const texts = await Promise.all(
+    canvases.map((canvas) =>
+      scheduler!.addJob('recognize', canvas).then((r) => r.data.text)
+    )
+  )
+  const matches = texts.map((text, i) => matchCard(i, text, config!.catalog, config!.build))
+  lastHadMatches = matches.some((m) => m.talent !== null)
   return { matches, region }
 }
 
-// crop → 2x upscale → grayscale → contrast stretch → invert if dark-on-dark.
-// Ravenswatch renders light talent text on dark cards; Tesseract reads dark
-// text on light background far more reliably.
+// crop → scale toward TARGET_CARD_WIDTH → grayscale/contrast/invert
 function preprocess(sx: number, sy: number, sw: number, sh: number): HTMLCanvasElement {
-  const scale = 2
+  const scale = Math.min(2, Math.max(0.75, TARGET_CARD_WIDTH / Math.max(1, sw)))
   const canvas = document.createElement('canvas')
-  canvas.width = sw * scale
-  canvas.height = sh * scale
+  canvas.width = Math.round(sw * scale)
+  canvas.height = Math.round(sh * scale)
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
   ctx.imageSmoothingEnabled = true
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)

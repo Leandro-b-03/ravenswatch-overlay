@@ -189,7 +189,7 @@ body.interactive #mode-badge {
 #pick-banner {
   position: fixed;
   left: 50%;
-  top: 18%;
+  top: 6%;
   transform: translateX(-50%);
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -241,5 +241,77 @@ body.interactive #mode-badge {
   }
   50% {
     transform: scale(1.04);
+  }
+}
+
+/* per-card highlight: pulsing border + arrow + rank badge over the card */
+#card-highlights {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.card-highlight {
+  position: absolute;
+  border: 4px solid #6fd24a;
+  border-radius: 12px;
+  box-shadow:
+    0 0 18px rgba(111, 210, 74, 0.65),
+    inset 0 0 24px rgba(111, 210, 74, 0.25);
+  animation: glow 1.1s ease-in-out infinite;
+}
+
+.card-highlight.muted-card {
+  border-color: rgba(138, 122, 78, 0.9);
+  box-shadow: none;
+  animation: none;
+}
+
+.card-highlight .ch-arrow {
+  position: absolute;
+  top: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 34px;
+  color: #6fd24a;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  animation: bounce 0.8s ease-in-out infinite;
+}
+
+.card-highlight .ch-rank {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  background: #234016;
+  color: #b9ff9e;
+  border: 2px solid #6fd24a;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 9px;
+  text-shadow: none;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgba(111, 210, 74, 0.5),
+      inset 0 0 18px rgba(111, 210, 74, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 26px rgba(111, 210, 74, 0.9),
+      inset 0 0 30px rgba(111, 210, 74, 0.35);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(8px);
   }
 }
