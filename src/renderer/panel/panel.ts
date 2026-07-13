@@ -260,7 +260,8 @@ $('btn-editor-save').onclick = async () => {
     hero,
     title,
     talents: editorPicks,
-    items: []
+    items: [],
+    notes: $<HTMLTextAreaElement>('editor-notes').value.trim() || undefined
   }
   builds = await window.overlayAPI.saveBuild(build)
   renderBuilds()
@@ -395,6 +396,20 @@ $('btn-cal-save').onclick = async () => {
 
 // ---------- settings ----------
 function initSettings(): void {
+  const daySec = $<HTMLInputElement>('setting-day-sec')
+  const nightSec = $<HTMLInputElement>('setting-night-sec')
+  daySec.value = String(settings.dayPhaseSec)
+  nightSec.value = String(settings.nightPhaseSec)
+  const saveTimer = async (): Promise<void> => {
+    settings = await window.overlayAPI.updateSettings({
+      dayPhaseSec: Math.max(30, Number(daySec.value) || 540),
+      nightPhaseSec: Math.max(30, Number(nightSec.value) || 150)
+    })
+    setStatus($('timer-save-status'), 'Saved — applies on next overlay run/reset.', 'ok')
+  }
+  daySec.onchange = () => void saveTimer()
+  nightSec.onchange = () => void saveTimer()
+
   const sel = $<HTMLSelectElement>('setting-language')
   sel.innerHTML = ''
   for (const l of SUPPORTED_LANGUAGES) {

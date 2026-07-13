@@ -52,6 +52,10 @@
           <button id="btn-editor-save">Save build</button>
         </div>
         <div id="editor-status" class="status"></div>
+        <textarea
+          id="editor-notes"
+          placeholder="Notes / combo cycle — each line becomes a rotating tip on the overlay"
+        ></textarea>
         <div class="editor-cols">
           <div>
             <h3>Talent catalog <small>(click to add)</small></h3>
@@ -94,11 +98,22 @@
           <div id="language-warning" class="status"></div>
         </div>
         <div class="settings-block">
+          <h3>Run timer</h3>
+          <label for="setting-day-sec">Day phase length (seconds)</label>
+          <input id="setting-day-sec" type="number" min="30" max="3600" step="10" />
+          <label for="setting-night-sec">Night phase length (seconds)</label>
+          <input id="setting-night-sec" type="number" min="30" max="3600" step="10" />
+          <div id="timer-save-status" class="status"></div>
+        </div>
+        <div class="settings-block">
           <h3>Hotkeys</h3>
           <table class="hotkeys">
-            <tr><td>Ctrl+Shift+O</td><td>Toggle overlay interactive mode</td></tr>
+            <tr><td>Ctrl+Shift+O</td><td>Toggle overlay interactive mode (move HUD by dragging)</td></tr>
             <tr><td>Ctrl+Shift+S</td><td>Scan talent screen once</td></tr>
             <tr><td>Ctrl+Shift+P</td><td>Open this control panel</td></tr>
+            <tr><td>Ctrl+Shift+T</td><td>Start/pause the run timer</td></tr>
+            <tr><td>Ctrl+Shift+N</td><td>Skip to next phase (day/night)</td></tr>
+            <tr><td>Ctrl+Shift+H</td><td>Show next tip from the build guide</td></tr>
           </table>
         </div>
       </section>

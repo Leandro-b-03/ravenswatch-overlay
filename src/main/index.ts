@@ -13,6 +13,9 @@ import { getSettings } from './store'
 const TOGGLE_INTERACTIVE = 'CommandOrControl+Shift+O'
 const SCAN_ONCE = 'CommandOrControl+Shift+S'
 const TOGGLE_PANEL = 'CommandOrControl+Shift+P'
+const TIMER_TOGGLE = 'CommandOrControl+Shift+T'
+const PHASE_SKIP = 'CommandOrControl+Shift+N'
+const NEXT_TIP = 'CommandOrControl+Shift+H'
 
 let overlayWindow: BrowserWindow | null = null
 let panelWindow: BrowserWindow | null = null
@@ -101,6 +104,11 @@ app.whenReady().then(async () => {
   globalShortcut.register(TOGGLE_INTERACTIVE, toggleInteractiveMode)
   globalShortcut.register(SCAN_ONCE, () => void detection.scanOnce())
   globalShortcut.register(TOGGLE_PANEL, openPanel)
+  globalShortcut.register(TIMER_TOGGLE, () =>
+    overlayWindow?.webContents.send('run-timer:toggle')
+  )
+  globalShortcut.register(PHASE_SKIP, () => overlayWindow?.webContents.send('run-timer:skip'))
+  globalShortcut.register(NEXT_TIP, () => overlayWindow?.webContents.send('tips:next'))
 })
 
 // Tray app: keep running when all windows are closed.

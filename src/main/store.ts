@@ -17,7 +17,10 @@ const DEFAULTS: StoreData = {
     activeBuildId: null,
     detectionEnabled: false,
     overlayPosition: null,
-    calibrations: {}
+    calibrations: {},
+    // Ravenswatch phase lengths vary by difficulty; user-adjustable in Settings.
+    dayPhaseSec: 540,
+    nightPhaseSec: 150
   },
   builds: []
 }

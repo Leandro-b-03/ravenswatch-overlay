@@ -4,6 +4,7 @@ import { getActiveBuild, getSettings } from './store'
 import { fetchHero } from './api'
 import { findGameSource } from './capture'
 import { SUPPORTED_LANGUAGES } from '../shared/types'
+import { buildTips } from '../shared/tips'
 
 // Orchestrates the 1 Hz detection loop:
 //   main asks the hidden worker window to scan → worker captures + OCRs +
@@ -19,7 +20,6 @@ interface DetectionDeps {
 
 let deps: DetectionDeps | null = null
 let timer: NodeJS.Timeout | null = null
-let scanning = false
 let emptyTicks = 0
 let lastSignature = ''
 let catalogCache: { hero: string; lang: string; talents: Talent[] } | null = null
@@ -72,7 +72,6 @@ export async function startDetection(): Promise<{ ok: boolean; error?: string }>
 export function stopDetection(): void {
   if (timer) clearInterval(timer)
   timer = null
-  scanning = false
   pushOverlayWaiting()
 }
 
@@ -93,7 +92,6 @@ export async function scanOnce(): Promise<{ ok: boolean; error?: string }> {
 
 // Called from ipc.ts when the worker reports scan results.
 export function handleScanResults(results: MatchResult[], region: CalibrationRegion): void {
-  scanning = false
   const matched = results.filter((r) => r.talent !== null)
   if (matched.length === 0) {
     emptyTicks++
@@ -126,7 +124,8 @@ export function pushOverlayWaiting(): void {
   const state: OverlayState = {
     kind: 'waiting',
     heroName: build?.hero ?? null,
-    buildTitle: build?.title ?? null
+    buildTitle: build?.title ?? null,
+    tips: buildTips(build?.description, build?.notes)
   }
   deps?.overlay()?.webContents.send('overlay:state', state)
 }

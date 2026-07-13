@@ -144,7 +144,14 @@ Decision: **Option A.** Mention B in README as consciously rejected.
   editor, per-resolution calibration with live preview, tesseract.js OCR in a
   hidden worker window, 1 Hz detection loop with debounce, `npm run
   ocr-bench` (3/3 on synthetic cards), NSIS installer via electron-builder.
-- Hotkeys: Ctrl+Shift+O interactive, Ctrl+Shift+S scan once, Ctrl+Shift+P panel.
+- Hotkeys: Ctrl+Shift+O interactive, Ctrl+Shift+S scan once, Ctrl+Shift+P
+  panel, Ctrl+Shift+T timer start/pause, Ctrl+Shift+N skip phase,
+  Ctrl+Shift+H next tip.
+- Also implemented (2026-07-13): day/night run timer with adjustable phase
+  lengths, T/L/C pick tally, draggable HUD with persisted position, and
+  player tips — the build's description HTML (author's guide) + manual-build
+  notes parsed into rotating TIP lines (src/shared/tips.ts). BuildMaker has
+  NO comments API — the guide description is the only player commentary.
 - NOT yet verified against the real game: window capture of the actual game,
   OCR accuracy on the real talent-screen font (needs screenshots in
   `test-assets/`), detected/no-match banner in a live run.

@@ -27,12 +27,21 @@ body.interactive #interactive-border {
   top: 16px;
   right: 16px;
   min-width: 220px;
+  max-width: 320px;
   padding: 10px 14px;
   border-radius: 8px;
   background: rgba(20, 18, 24, 0.72);
   color: #f1e9d8;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 204, 51, 0.35);
+}
+
+body.interactive #hud {
+  cursor: grab;
+}
+
+body.interactive #hud.dragging {
+  cursor: grabbing;
 }
 
 #hud-header {
@@ -82,6 +91,83 @@ body.interactive #mode-badge {
 #phase-clock {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
+}
+
+#phase-label.day {
+  color: #ffd76a;
+}
+
+#phase-label.night {
+  color: #8fa8ff;
+}
+
+#timer-state {
+  font-size: 11px;
+  color: #a89f8f;
+}
+
+#hud-tally {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+#hud-tally button {
+  background: rgba(255, 204, 51, 0.1);
+  border: 1px solid rgba(255, 204, 51, 0.25);
+  color: #cfc6b4;
+  border-radius: 5px;
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#hud-tally button:hover {
+  background: rgba(255, 204, 51, 0.22);
+}
+
+#hud-tally b {
+  color: #ffcc33;
+  font-variant-numeric: tabular-nums;
+}
+
+#tally-reset {
+  margin-left: auto;
+}
+
+#tip-box {
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 204, 51, 0.15);
+  padding-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #d9cfba;
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+
+#tip-box.hidden {
+  display: none;
+}
+
+#tip-label {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffcc33;
+  border: 1px solid rgba(255, 204, 51, 0.4);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+#tip-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 #detection-status {

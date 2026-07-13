@@ -20,6 +20,15 @@ const overlayAPI = {
   onOverlayState: (cb: (state: OverlayState) => void): void => {
     ipcRenderer.on('overlay:state', (_e, s: OverlayState) => cb(s))
   },
+  onRunTimerToggle: (cb: () => void): void => {
+    ipcRenderer.on('run-timer:toggle', () => cb())
+  },
+  onRunTimerSkip: (cb: () => void): void => {
+    ipcRenderer.on('run-timer:skip', () => cb())
+  },
+  onNextTip: (cb: () => void): void => {
+    ipcRenderer.on('tips:next', () => cb())
+  },
 
   // settings
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
