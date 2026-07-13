@@ -143,11 +143,16 @@ Decision: **Option A.** Mention B in README as consciously rejected.
   Calibration / Settings), BuildMaker import + community browsing + manual
   editor, per-resolution calibration with live preview, tesseract.js OCR in a
   hidden worker window, 1 Hz detection loop with debounce, `npm run
-  ocr-bench` (3/3 on synthetic cards), NSIS installer via electron-builder.
+  ocr-bench` (6/6: 3 synthetic + a real Steam-store talent-card crop at
+  1080p/900p/768p — the real stylized font OCRs at score 1.00), NSIS
+  installer via electron-builder.
 - Hotkeys: Ctrl+Shift+O interactive, Ctrl+Shift+S scan once, Ctrl+Shift+P panel.
 - NOT yet verified against the real game: window capture of the actual game,
-  OCR accuracy on the real talent-screen font (needs screenshots in
-  `test-assets/`), detected/no-match banner in a live run.
+  detected/no-match banner in a live run, and OCR breadth (only one real
+  talent-screen sample so far — the Steam store shot; still want Leandro's
+  own screenshots across heroes/resolutions/languages in `test-assets/`).
+  Watch the reject margin: an out-of-catalog card's best wrong match scored
+  0.67 vs MATCH_THRESHOLD 0.72.
 - Storage: plain JSON at `%APPDATA%/ravenswatch-overlay/` (electron-store was
   dropped — ESM-only friction with electron-vite CJS main output).
 - Node.js was not preinstalled on the dev machine; installed via
