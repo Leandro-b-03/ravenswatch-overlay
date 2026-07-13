@@ -94,6 +94,9 @@ const overlayAPI = {
   },
   onDetectionNote: (cb: (key: string) => void): void => {
     ipcRenderer.on('overlay:detection-note', (_e, key: string) => cb(key))
+  },
+  onPickLogged: (cb: (talentName: string) => void): void => {
+    ipcRenderer.on('overlay:pick-logged', (_e, name: string) => cb(name))
   }
 }
 

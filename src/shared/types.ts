@@ -106,10 +106,20 @@ export type OverlayState =
   | { kind: 'detected'; picks: DetectedPick[]; region: CalibrationRegion }
   | { kind: 'no-match'; region: CalibrationRegion }
 
+// Rectangle in game-capture pixel coordinates.
+export interface CaptureRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface DetectedPick {
   cardIndex: number
   talentName: string
   priorityRank: number // 1-based position in the build's talent order
+  // Where the talent name was found (full-frame mode); highlights anchor here.
+  bbox?: CaptureRect
 }
 
 export interface OcrCardResult {
@@ -123,6 +133,7 @@ export interface MatchResult {
   score: number
   inBuild: boolean
   priorityRank: number | null
+  bbox?: CaptureRect
 }
 
 export interface CaptureSource {

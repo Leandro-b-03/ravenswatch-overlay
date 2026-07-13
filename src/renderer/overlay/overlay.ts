@@ -182,6 +182,20 @@ window.overlayAPI.onDetectionNote((key) => {
   detectionStatus.className = key === 'note.active' ? 'active' : 'idle'
 })
 
+// Run recorder feedback: brief toast + talent tally bump.
+let toastTimer: number | undefined
+window.overlayAPI.onPickLogged((talentName) => {
+  tally.talent += 1
+  renderTally()
+  detectionStatus.textContent = t('ov.logged', { name: talentName })
+  detectionStatus.className = 'active'
+  if (toastTimer !== undefined) clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    detectionStatus.textContent = t('note.active')
+    detectionStatus.className = 'active'
+  }, 3000)
+})
+
 // Maps a card's rect from game-capture coordinates onto this overlay window.
 // In borderless windowed mode the game covers the screen, so scaling by the
 // capture→window ratio lands the highlight on the actual card.
@@ -209,9 +223,26 @@ function clearHighlights(): void {
 function highlightCard(
   region: Parameters<typeof cardRect>[0],
   cardIndex: number,
-  rank: number | null
+  rank: number | null,
+  bbox?: { x: number; y: number; width: number; height: number }
 ): void {
-  const rect = cardRect(region, cardIndex)
+  // Full-frame mode gives the exact name position — pad it into a card-ish
+  // frame. Card mode falls back to the calibrated card slice.
+  let rect: { left: number; top: number; width: number; height: number }
+  if (bbox) {
+    const sx = window.innerWidth / region.captureWidth
+    const sy = window.innerHeight / region.captureHeight
+    const padX = bbox.width * 0.2
+    const padY = bbox.height * 1.2
+    rect = {
+      left: (bbox.x - padX) * sx,
+      top: (bbox.y - padY) * sy,
+      width: (bbox.width + padX * 2) * sx,
+      height: (bbox.height + padY * 2) * sy
+    }
+  } else {
+    rect = cardRect(region, cardIndex)
+  }
   const el = document.createElement('div')
   el.className = 'card-highlight' + (rank === null ? ' muted-card' : '')
   el.style.left = `${rect.left}px`
@@ -256,7 +287,7 @@ window.overlayAPI.onOverlayState((state) => {
       rank.textContent = t('ov.rank', { n: pick.priorityRank })
       line.appendChild(rank)
       pickContent.appendChild(line)
-      highlightCard(state.region, pick.cardIndex, pick.priorityRank)
+      highlightCard(state.region, pick.cardIndex, pick.priorityRank, pick.bbox)
     }
     pickBanner.classList.remove('hidden')
     return

@@ -1,7 +1,7 @@
 // Pure text-normalization and fuzzy-matching functions.
 // Kept dependency-free so the headless ocr-bench script can import them.
 
-import type { Talent, Build, MatchResult } from './types'
+import type { Talent, Build, CaptureRect, MatchResult } from './types'
 
 export function normalize(text: string): string {
   return text
@@ -116,4 +116,141 @@ export function matchCard(
     }
   }
   return { cardIndex, talent: bestTalent, score: bestScore, inBuild, priorityRank }
+}
+
+export interface OcrWord {
+  text: string
+  bbox: CaptureRect
+}
+
+export interface OcrLine {
+  text: string
+  bbox: CaptureRect
+  words?: OcrWord[]
+}
+
+function rankInBuild(talent: Talent, build: Build | null): { inBuild: boolean; rank: number | null } {
+  if (!build) return { inBuild: false, rank: null }
+  const idx = build.talents.findIndex(
+    (bt) => (bt.id && talent.id && bt.id === talent.id) || normalize(bt.name) === normalize(talent.name)
+  )
+  return idx >= 0 ? { inBuild: true, rank: idx + 1 } : { inBuild: false, rank: null }
+}
+
+function unionRect(rects: CaptureRect[]): CaptureRect {
+  const x = Math.min(...rects.map((r) => r.x))
+  const y = Math.min(...rects.map((r) => r.y))
+  return {
+    x,
+    y,
+    width: Math.max(...rects.map((r) => r.x + r.width)) - x,
+    height: Math.max(...rects.map((r) => r.y + r.height)) - y
+  }
+}
+
+function rectsOverlap(a: CaptureRect, b: CaptureRect): boolean {
+  return (
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+  )
+}
+
+// Full-frame mode: match catalog talents against OCR output of the whole
+// game frame. Matching happens at WORD level — tesseract merges the 2-3 card
+// names sitting at the same height into a single wide "line", so the matched
+// words' own boxes are the only reliable position. Wrapped names are covered
+// by chaining each line's words with the next line's.
+export function matchLines(
+  lines: OcrLine[],
+  catalog: Talent[],
+  build: Build | null
+): MatchResult[] {
+  interface Candidate {
+    talent: Talent
+    score: number
+    bbox: CaptureRect
+  }
+
+  // word sequences to probe: each line's words, plus line joined with next
+  const sequences: OcrWord[][] = []
+  for (let i = 0; i < lines.length; i++) {
+    const words = lines[i].words?.length
+      ? lines[i].words!
+      : [{ text: lines[i].text, bbox: lines[i].bbox }]
+    sequences.push(words)
+    const next = lines[i + 1]
+    if (next) {
+      const a = lines[i].bbox
+      const b = next.bbox
+      const closeBelow = b.y - (a.y + a.height) < a.height * 1.5
+      const xOverlap = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0
+      if (closeBelow && xOverlap) {
+        const nextWords = next.words?.length ? next.words : [{ text: next.text, bbox: next.bbox }]
+        sequences.push([...words, ...nextWords])
+      }
+    }
+  }
+
+  const allWords: OcrWord[] = sequences.length
+    ? lines.flatMap((ln) => (ln.words?.length ? ln.words : [{ text: ln.text, bbox: ln.bbox }]))
+    : []
+
+  const candidates: Candidate[] = []
+  for (const talent of catalog) {
+    const nameTokens = normalize(talent.name).split(' ')
+    const target = nameTokens.join(' ')
+    let best: Candidate | null = null
+    for (const seq of sequences) {
+      // window sizes n and n+1 (OCR sometimes splits a word in two)
+      for (const span of [nameTokens.length, nameTokens.length + 1]) {
+        for (let i = 0; i + span <= seq.length; i++) {
+          const windowWords = seq.slice(i, i + span)
+          const s = similarity(windowWords.map((w) => w.text).join(' '), target)
+          if (s >= MATCH_THRESHOLD && (!best || s > best.score)) {
+            best = { talent, score: s, bbox: unionRect(windowWords.map((w) => w.bbox)) }
+          }
+        }
+      }
+    }
+    // Wrapped two-word name: first word with the second one right beneath it.
+    // (Cards wrap long names; tesseract puts the halves in different lines,
+    // and merged multi-card lines put them far apart in reading order.)
+    if (nameTokens.length === 2) {
+      for (const a of allWords) {
+        if (similarity(a.text, nameTokens[0]) < 0.7) continue
+        for (const b of allWords) {
+          const dy = b.bbox.y - (a.bbox.y + a.bbox.height)
+          const xOverlap =
+            Math.min(a.bbox.x + a.bbox.width, b.bbox.x + b.bbox.width) -
+            Math.max(a.bbox.x, b.bbox.x)
+          if (dy < -a.bbox.height * 0.2 || dy > a.bbox.height * 2 || xOverlap <= 0) continue
+          const s = similarity(`${a.text} ${b.text}`, target)
+          if (s >= MATCH_THRESHOLD && (!best || s > best.score)) {
+            best = { talent, score: s, bbox: unionRect([a.bbox, b.bbox]) }
+          }
+        }
+      }
+    }
+    if (best) candidates.push(best)
+  }
+
+  // Greedy non-overlap: highest scores claim their screen area first.
+  candidates.sort((a, b) => b.score - a.score)
+  const accepted: Candidate[] = []
+  for (const c of candidates) {
+    if (!accepted.some((a) => rectsOverlap(a.bbox, c.bbox))) accepted.push(c)
+  }
+
+  return accepted
+    .sort((a, b) => a.bbox.x - b.bbox.x)
+    .map((c, i) => {
+      const { inBuild, rank } = rankInBuild(c.talent, build)
+      return {
+        cardIndex: i,
+        talent: c.talent,
+        score: c.score,
+        inBuild,
+        priorityRank: rank,
+        bbox: c.bbox
+      }
+    })
 }

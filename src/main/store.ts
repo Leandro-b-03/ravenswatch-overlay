@@ -98,6 +98,42 @@ export function deleteBuild(id: string): void {
   save()
 }
 
+// Run recorder: appends what the player actually picked to a build derived
+// from the active one ("<active title> — run <date>"). Created on first pick
+// of the session; repeat picks of the same talent are recorded again (talents
+// can be leveled multiple times in-game).
+let currentRunBuildId: string | null = null
+
+export function recordRunPick(talent: import('../shared/types').Talent): Build | null {
+  const active = getActiveBuild()
+  if (!active) return null
+  const d = load()
+  let run = currentRunBuildId ? d.builds.find((b) => b.id === currentRunBuildId) : undefined
+  if (!run) {
+    const date = new Date()
+    const stamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    run = {
+      id: `run-${Date.now()}`,
+      source: 'manual',
+      hero: active.hero,
+      title: `${active.title} — run ${stamp}`,
+      talents: [],
+      items: [],
+      notes: `Recorded during a run (baseline: ${active.title})`
+    }
+    d.builds.push(run)
+    currentRunBuildId = run.id
+  }
+  run.talents.push(talent)
+  save()
+  return run
+}
+
+// A new run record starts after the active build changes or the app restarts.
+export function resetRunRecording(): void {
+  currentRunBuildId = null
+}
+
 // Generic JSON cache helpers (hero catalogs, item catalog).
 export function readCache<T>(name: string): T | null {
   try {

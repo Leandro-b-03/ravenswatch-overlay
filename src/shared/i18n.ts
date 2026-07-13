@@ -47,7 +47,7 @@ const en = {
   'cal.saveRegion': 'Save region',
   'cal.cards': 'cards',
   'cal.instructions':
-    'Start the game, click “Find game window”, then drag a box over the area where the talent cards appear.',
+    'Optional: detection scans the whole game screen by default. Calibrating a fixed talent-card region makes scans faster and highlights more precise. Start the game, click “Find game window”, then drag a box over the area where the talent cards appear.',
   'cal.drag': 'Drag a box over the talent-card area, then Save region.',
   'cal.saved': 'Saved calibration for {key}.',
   'cal.failed': 'Capture failed: {error}',
@@ -97,6 +97,8 @@ const en = {
   'ov.night': 'Night',
   'ov.tip': 'TIP',
   // detection status notes pushed from main
+  'ov.logged': 'logged: {name} ✓',
+  'hk.log': 'Log picked card 1/2/3 to the run record',
   'note.noBuild': 'no active build — pick one in the panel (Ctrl+Shift+P)',
   'note.noCalibration': 'not calibrated — open panel (Ctrl+Shift+P) → Calibration',
   'note.noGame': 'game window not found — start Ravenswatch (borderless windowed)',
@@ -143,7 +145,7 @@ const pt: Record<keyof typeof en, string> = {
   'cal.saveRegion': 'Salvar região',
   'cal.cards': 'cartas',
   'cal.instructions':
-    'Abra o jogo, clique em “Localizar janela do jogo” e arraste uma caixa sobre a área onde as cartas de talento aparecem.',
+    'Opcional: por padrão a detecção escaneia a tela inteira do jogo. Calibrar uma região fixa das cartas deixa a leitura mais rápida e o destaque mais preciso. Abra o jogo, clique em “Localizar janela do jogo” e arraste uma caixa sobre a área das cartas de talento.',
   'cal.drag': 'Arraste uma caixa sobre a área das cartas e clique em Salvar região.',
   'cal.saved': 'Calibração salva para {key}.',
   'cal.failed': 'Falha na captura: {error}',
@@ -188,6 +190,8 @@ const pt: Record<keyof typeof en, string> = {
   'ov.day': 'Dia',
   'ov.night': 'Noite',
   'ov.tip': 'DICA',
+  'ov.logged': 'registrado: {name} ✓',
+  'hk.log': 'Registrar carta escolhida 1/2/3 na build da partida',
   'note.noBuild': 'nenhuma build ativa — escolha uma no painel (Ctrl+Shift+P)',
   'note.noCalibration': 'sem calibração — abra o painel (Ctrl+Shift+P) → Calibração',
   'note.noGame': 'jogo não encontrado — abra o Ravenswatch (janela sem borda)',

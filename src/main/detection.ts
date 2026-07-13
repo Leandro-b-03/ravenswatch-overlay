@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
 import type { Build, CalibrationRegion, MatchResult, OverlayState, Talent } from '../shared/types'
-import { getActiveBuild, getSettings } from './store'
+import { getActiveBuild, getSettings, recordRunPick, resetRunRecording } from './store'
 import { fetchHero } from './api'
 import { findGameSource } from './capture'
 import { SUPPORTED_LANGUAGES } from '../shared/types'
@@ -68,10 +68,6 @@ async function watchTick(): Promise<void> {
     note('note.noBuild')
     return
   }
-  if (Object.keys(getSettings().calibrations).length === 0) {
-    note('note.noCalibration')
-    return
-  }
   const source = await findGameSource()
   if (!source) {
     note('note.noGame')
@@ -89,10 +85,6 @@ export async function startDetection(): Promise<{ ok: boolean; error?: string }>
 
   const source = await findGameSource()
   if (!source) return { ok: false, error: 'Ravenswatch window not found — is the game running?' }
-
-  if (Object.keys(settings.calibrations).length === 0) {
-    return { ok: false, error: 'No calibration — set the talent region in the control panel' }
-  }
 
   let catalog: Talent[]
   try {
@@ -156,6 +148,13 @@ export async function scanOnce(): Promise<{ ok: boolean; error?: string }> {
   return { ok: true }
 }
 
+// Most recent matched cards — the run recorder resolves pick hotkeys here.
+let lastMatched: MatchResult[] = []
+
+export function getLastMatched(): MatchResult[] {
+  return lastMatched
+}
+
 // Called from ipc.ts when the worker reports scan results.
 export function handleScanResults(results: MatchResult[], region: CalibrationRegion): void {
   const matched = results.filter((r) => r.talent !== null)
@@ -163,11 +162,13 @@ export function handleScanResults(results: MatchResult[], region: CalibrationReg
     emptyTicks++
     if (emptyTicks >= CLEAR_AFTER_EMPTY_TICKS && lastSignature !== '') {
       lastSignature = ''
+      lastMatched = []
       pushOverlayWaiting()
     }
     return
   }
   emptyTicks = 0
+  lastMatched = matched
   const signature = matched.map((r) => `${r.cardIndex}:${r.talent!.name}`).join('|')
   if (signature === lastSignature) return
   lastSignature = signature
@@ -177,7 +178,8 @@ export function handleScanResults(results: MatchResult[], region: CalibrationReg
     .map((r) => ({
       cardIndex: r.cardIndex,
       talentName: r.talent!.name,
-      priorityRank: r.priorityRank ?? 999
+      priorityRank: r.priorityRank ?? 999,
+      bbox: r.bbox
     }))
 
   const state: OverlayState =
@@ -208,6 +210,7 @@ async function getCatalog(hero: string, lang: string): Promise<Talent[]> {
 
 export function activeBuildChanged(_build: Build | null): void {
   catalogCache = null
+  resetRunRecording()
   if (timer) {
     // restart with the new build's catalog
     stopDetection()
@@ -216,4 +219,13 @@ export function activeBuildChanged(_build: Build | null): void {
     pushOverlayWaiting()
     void watchTick()
   }
+}
+
+// User pressed Ctrl+Shift+<n> on a talent screen: record card n as picked.
+export function logPick(cardIndex: number): void {
+  const match = lastMatched.find((m) => m.cardIndex === cardIndex)
+  if (!match?.talent) return
+  const run = recordRunPick(match.talent)
+  if (!run) return
+  deps?.overlay()?.webContents.send('overlay:pick-logged', match.talent.name)
 }

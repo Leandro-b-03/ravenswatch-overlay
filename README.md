@@ -20,10 +20,18 @@ See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture.
     the talent-card area once per resolution.
   - **Settings** — game language (en/fr/es/de/it/pl/ru) with localization
     check, hotkey reference.
-- **Talent detection** — automatic ~1 Hz loop (or one-shot hotkey): captures
-  the calibrated region, OCRs each card (Tesseract), fuzzy-matches against the
-  hero's talent catalog, and flashes **★ PICK: <talent>** with its priority
-  rank when a card is in your build — or "no priority here — reroll?" when not.
+- **Talent detection** — fully automatic: when the game window is found and a
+  build is active, a loop scans the screen, OCRs the talent names (Tesseract),
+  fuzzy-matches against the hero's catalog, and highlights the recommended
+  card in place (pulsing border + arrow + priority rank) — or shows
+  "no priority here — reroll?" when nothing from your build is offered.
+  **No calibration required**: by default the whole game frame is scanned and
+  names are located by their OCR positions. Calibrating a fixed card region
+  (Calibration tab) is optional and makes scans faster and boxes more precise.
+- **Run recorder** — press `Ctrl+Shift+1/2/3` on a talent screen to log which
+  card you actually took. Picks accumulate into a new build named
+  "<active build> — run <date>" (baseline noted), so every run leaves a
+  reusable record even when you deviate from the plan.
 - **Run timer** — day/night phase countdown with day counter; phase lengths
   adjustable in Settings; start/pause/skip via hotkeys.
 - **Pick tally** — T/L/C counters on the HUD (click in interactive mode) plus
@@ -45,6 +53,7 @@ See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture.
 | `Ctrl+Shift+T` | Start/pause the run timer |
 | `Ctrl+Shift+N` | Skip to the next phase (day ↔ night) |
 | `Ctrl+Shift+H` | Show the next tip from the build guide |
+| `Ctrl+Shift+1/2/3` | Log the card you picked (left/middle/right) to the run record |
 
 ## Requirements
 
@@ -76,10 +85,14 @@ npm run ocr-bench -- --hero merlin --lang en
 ### First run with the game
 
 1. Start Ravenswatch (borderless windowed), start the overlay.
-2. Control panel → Calibration → "Find game window" → drag a box over the
-   talent-card area (do this on the level-up screen) → Save region.
-3. My Builds → import or create a build → Set active.
-4. Click "Start detection" (or press `Ctrl+Shift+S` on a talent screen).
+2. My Builds → import or create a build → Set active.
+3. That's it — detection starts by itself when the game window is found. The
+   overlay's status line tells you if anything is missing.
+4. Optional: Calibration → drag a box over the talent-card area on a level-up
+   screen for faster scans and tighter highlight boxes.
+
+`npx tsx scripts/fullframe-bench.ts` validates the calibration-free pipeline
+headless (synthesizes a 1080p talent screen and checks names + positions).
 
 ## Data & privacy
 

@@ -8,7 +8,8 @@
 // cheap frame hash skips OCR entirely while the region is unchanged.
 
 import { createScheduler, createWorker, type Scheduler } from 'tesseract.js'
-import { matchCard } from '../../shared/matching'
+import { matchCard, matchLines } from '../../shared/matching'
+import { collectLines } from '../../shared/ocr-lines'
 import { preprocessPixels } from '../../shared/preprocess'
 import type {
   Build,
@@ -141,7 +142,8 @@ async function scan(): Promise<{ matches: MatchResult[]; region: CalibrationRegi
   if (!w || !h) return null
 
   const region = pickCalibration(w, h)
-  if (!region) return null
+  // No calibration → scan the whole frame and locate names by their OCR bbox.
+  if (!region) return scanFullFrame(w, h)
 
   // Static frame? Nothing to re-OCR. Report empty only if the last real scan
   // also had no matches (keeps the empty-tick debounce in main honest).
@@ -167,6 +169,49 @@ async function scan(): Promise<{ matches: MatchResult[]; region: CalibrationRegi
   const matches = texts.map((text, i) => matchCard(i, text, config!.catalog, config!.build))
   lastHadMatches = matches.some((m) => m.talent !== null)
   return { matches, region }
+}
+
+const FULLFRAME_TARGET_WIDTH = 1440
+
+// Calibration-free path: OCR the entire frame once (sparse text), then match
+// catalog names against the recognized lines and keep their positions.
+async function scanFullFrame(
+  w: number,
+  h: number
+): Promise<{ matches: MatchResult[]; region: CalibrationRegion } | null> {
+  if (!config || !scheduler) return null
+  const whole = { x: 0, y: 0, width: w, height: h, cardCount: 1, captureWidth: w, captureHeight: h }
+
+  const hash = frameHash(whole)
+  if (hash === lastFrameHash) {
+    return lastHadMatches ? null : { matches: [], region: whole }
+  }
+  lastFrameHash = hash
+
+  const scale = Math.min(1.5, Math.max(0.5, FULLFRAME_TARGET_WIDTH / w))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(w * scale)
+  canvas.height = Math.round(h * scale)
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(video, 0, 0, w, h, 0, 0, canvas.width, canvas.height)
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  preprocessPixels(img.data)
+  ctx.putImageData(img, 0, 0)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = (await scheduler.addJob('recognize', canvas, {}, {
+    text: true,
+    blocks: true
+  } as any)) as { data: any } // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const lines = collectLines(data, scale)
+
+  const matches = matchLines(lines, config.catalog, config.build)
+  lastHadMatches = matches.some((m) => m.talent !== null)
+  return {
+    matches,
+    region: { ...whole, cardCount: Math.max(1, matches.length) }
+  }
 }
 
 // crop → scale toward TARGET_CARD_WIDTH → grayscale/contrast/invert

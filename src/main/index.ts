@@ -109,6 +109,10 @@ app.whenReady().then(async () => {
   )
   globalShortcut.register(PHASE_SKIP, () => overlayWindow?.webContents.send('run-timer:skip'))
   globalShortcut.register(NEXT_TIP, () => overlayWindow?.webContents.send('tips:next'))
+  // Run recorder: log which card was actually picked (1-3, left to right).
+  for (let n = 1; n <= 3; n++) {
+    globalShortcut.register(`CommandOrControl+Shift+${n}`, () => detection.logPick(n - 1))
+  }
 })
 
 // Tray app: keep running when all windows are closed.
