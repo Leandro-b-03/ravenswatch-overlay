@@ -13,6 +13,7 @@ interface StoreData {
 
 const DEFAULTS: StoreData = {
   settings: {
+    uiLanguage: 'en',
     gameLanguage: 'en',
     activeBuildId: null,
     detectionEnabled: false,

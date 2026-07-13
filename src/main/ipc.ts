@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, shell, BrowserWindow } from 'electron'
 import type { Build, CalibrationRegion, MatchResult, Settings } from '../shared/types'
 import * as api from './api'
 import * as store from './store'
@@ -57,6 +57,13 @@ export function registerIpc(deps: IpcDeps): void {
     store.saveBuild(build)
     return build
   })
+  // Fetch full build data for the detail view without saving it locally.
+  ipcMain.handle('builds:fetch', (_e, id: string) => api.fetchBuild(id))
+
+  ipcMain.handle('shell:openExternal', (_e, url: string) => {
+    if (/^https:\/\/(buildmaker\.)?ravenswatch\.com\//.test(url)) return shell.openExternal(url)
+    return Promise.resolve()
+  })
 
   // --- capture / calibration ---
   ipcMain.handle('capture:sources', () => listCaptureSources())
@@ -81,6 +88,7 @@ export function registerIpc(deps: IpcDeps): void {
       detection.handleScanResults(results, region)
     }
   )
+  ipcMain.on('worker:ready', () => detection.handleWorkerReady())
 
   // overlay chrome
   ipcMain.on('overlay:toggle-interactive', () => deps.toggleInteractive())

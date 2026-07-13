@@ -9,11 +9,11 @@
     <header>
       <h1>RAVENSWATCH <span>OVERLAY</span></h1>
       <nav>
-        <button data-tab="builds" class="active">My Builds</button>
-        <button data-tab="browse">Browse</button>
-        <button data-tab="editor">Editor</button>
-        <button data-tab="calibration">Calibration</button>
-        <button data-tab="settings">Settings</button>
+        <button data-tab="builds" class="active" data-i18n="tab.builds">My Builds</button>
+        <button data-tab="browse" data-i18n="tab.browse">Browse</button>
+        <button data-tab="editor" data-i18n="tab.editor">Editor</button>
+        <button data-tab="calibration" data-i18n="tab.calibration">Calibration</button>
+        <button data-tab="settings" data-i18n="tab.settings">Settings</button>
       </nav>
       <div id="detection-controls">
         <span id="detection-state" class="off">detection off</span>
@@ -25,8 +25,8 @@
       <!-- My Builds -->
       <section id="tab-builds" class="tab active">
         <div class="row">
-          <input id="import-url" type="text" placeholder="Paste a buildmaker.ravenswatch.com/build/… link" />
-          <button id="btn-import">Import</button>
+          <input id="import-url" type="text" data-i18n-placeholder="builds.importPlaceholder" />
+          <button id="btn-import" data-i18n="builds.import">Import</button>
         </div>
         <div id="import-status" class="status"></div>
         <div id="builds-list" class="card-grid"></div>
@@ -48,21 +48,18 @@
       <section id="tab-editor" class="tab">
         <div class="row">
           <select id="editor-hero"></select>
-          <input id="editor-title" type="text" placeholder="Build title" />
-          <button id="btn-editor-save">Save build</button>
+          <input id="editor-title" type="text" data-i18n-placeholder="editor.title" />
+          <button id="btn-editor-save" data-i18n="editor.save">Save build</button>
         </div>
         <div id="editor-status" class="status"></div>
-        <textarea
-          id="editor-notes"
-          placeholder="Notes / combo cycle — each line becomes a rotating tip on the overlay"
-        ></textarea>
+        <textarea id="editor-notes" data-i18n-placeholder="editor.notesPlaceholder"></textarea>
         <div class="editor-cols">
           <div>
-            <h3>Talent catalog <small>(click to add)</small></h3>
+            <h3><span data-i18n="editor.catalog">Talent catalog</span> <small data-i18n="editor.catalogHint">(click to add)</small></h3>
             <div id="editor-catalog" class="talent-list"></div>
           </div>
           <div>
-            <h3>Priority order <small>(click to remove, drag to reorder)</small></h3>
+            <h3><span data-i18n="editor.priority">Priority order</span> <small data-i18n="editor.priorityHint">(click to remove, drag to reorder)</small></h3>
             <div id="editor-picks" class="talent-list"></div>
           </div>
         </div>
@@ -71,19 +68,16 @@
       <!-- Calibration -->
       <section id="tab-calibration" class="tab">
         <div class="row">
-          <button id="btn-cal-refresh">Find game window</button>
+          <button id="btn-cal-refresh" data-i18n="cal.findGame">Find game window</button>
           <select id="cal-source"></select>
           <select id="cal-cards">
-            <option value="3">3 cards</option>
-            <option value="2">2 cards</option>
-            <option value="4">4 cards</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
           </select>
-          <button id="btn-cal-save" disabled>Save region</button>
+          <button id="btn-cal-save" disabled data-i18n="cal.saveRegion">Save region</button>
         </div>
-        <div id="cal-status" class="status">
-          Start the game, click “Find game window”, then drag a box over the area where the talent
-          cards appear.
-        </div>
+        <div id="cal-status" class="status" data-i18n="cal.instructions"></div>
         <div id="cal-stage">
           <video id="cal-video" autoplay muted></video>
           <canvas id="cal-canvas"></canvas>
@@ -93,33 +87,59 @@
       <!-- Settings -->
       <section id="tab-settings" class="tab">
         <div class="settings-block">
-          <label for="setting-language">Game language</label>
+          <label for="setting-ui-language" data-i18n="settings.uiLanguage">App language</label>
+          <select id="setting-ui-language"></select>
+        </div>
+        <div class="settings-block">
+          <label for="setting-language" data-i18n="settings.gameLanguage">Game language</label>
           <select id="setting-language"></select>
           <div id="language-warning" class="status"></div>
         </div>
         <div class="settings-block">
-          <h3>Run timer</h3>
-          <label for="setting-day-sec">Day phase length (seconds)</label>
+          <h3 data-i18n="settings.timer">Run timer</h3>
+          <label for="setting-day-sec" data-i18n="settings.daySec">Day phase length (seconds)</label>
           <input id="setting-day-sec" type="number" min="30" max="3600" step="10" />
-          <label for="setting-night-sec">Night phase length (seconds)</label>
+          <label for="setting-night-sec" data-i18n="settings.nightSec">Night phase length (seconds)</label>
           <input id="setting-night-sec" type="number" min="30" max="3600" step="10" />
           <div id="timer-save-status" class="status"></div>
         </div>
         <div class="settings-block">
-          <h3>Overlay</h3>
-          <button id="btn-reset-hud">Reset HUD position (top-right)</button>
+          <h3 data-i18n="settings.overlay">Overlay</h3>
+          <button id="btn-reset-hud" data-i18n="settings.resetHud">Reset HUD position (top-right)</button>
           <div id="hud-reset-status" class="status"></div>
         </div>
         <div class="settings-block">
-          <h3>Hotkeys</h3>
+          <h3 data-i18n="settings.hotkeys">Hotkeys</h3>
           <table class="hotkeys">
-            <tr><td>Ctrl+Shift+O</td><td>Toggle overlay interactive mode (move HUD by dragging)</td></tr>
-            <tr><td>Ctrl+Shift+S</td><td>Scan talent screen once</td></tr>
-            <tr><td>Ctrl+Shift+P</td><td>Open this control panel</td></tr>
-            <tr><td>Ctrl+Shift+T</td><td>Start/pause the run timer</td></tr>
-            <tr><td>Ctrl+Shift+N</td><td>Skip to next phase (day/night)</td></tr>
-            <tr><td>Ctrl+Shift+H</td><td>Show next tip from the build guide</td></tr>
+            <tr><td>Ctrl+Shift+O</td><td data-i18n="hk.interactive"></td></tr>
+            <tr><td>Ctrl+Shift+S</td><td data-i18n="hk.scan"></td></tr>
+            <tr><td>Ctrl+Shift+P</td><td data-i18n="hk.panel"></td></tr>
+            <tr><td>Ctrl+Shift+T</td><td data-i18n="hk.timer"></td></tr>
+            <tr><td>Ctrl+Shift+N</td><td data-i18n="hk.skip"></td></tr>
+            <tr><td>Ctrl+Shift+H</td><td data-i18n="hk.tip"></td></tr>
           </table>
+        </div>
+      </section>
+
+      <!-- Build detail (cookbook) — covers the whole main area when open -->
+      <section id="build-detail" class="hidden">
+        <div class="row">
+          <button id="btn-detail-back" data-i18n="detail.back">← Back</button>
+          <h2 id="detail-title"></h2>
+          <button id="btn-detail-source" class="right" data-i18n="detail.openSource">Open on BuildMaker</button>
+        </div>
+        <div id="detail-meta" class="status"></div>
+        <div id="detail-body">
+          <div class="detail-col">
+            <h3 data-i18n="detail.talents">Talent priority</h3>
+            <div id="detail-talents"></div>
+            <h3 data-i18n="detail.items">Magical objects</h3>
+            <div id="detail-items"></div>
+          </div>
+          <div class="detail-col">
+            <h3 data-i18n="detail.guide">Player guide</h3>
+            <div id="detail-guide"></div>
+          </div>
         </div>
       </section>
     </main>

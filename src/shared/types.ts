@@ -44,8 +44,10 @@ export interface GameItem {
   id: string
   name: string
   description: string
-  rarity?: Rarity
-  iconUrl?: string
+  effect?: string
+  quality?: number
+  quality_name?: string
+  icon?: string
 }
 
 export interface BuildItemRef {
@@ -89,6 +91,7 @@ export interface CalibrationRegion {
 }
 
 export interface Settings {
+  uiLanguage: string
   gameLanguage: string
   activeBuildId: string | null
   detectionEnabled: boolean
@@ -128,10 +131,12 @@ export interface CaptureSource {
   thumbnailDataUrl: string
 }
 
-// Languages the BuildMaker API localizes talent names for (verified: en/fr/es;
-// de assumed — the app detects English fallback at runtime and warns).
+// Game languages selectable for OCR. BuildMaker localizes talent names for
+// some (verified: en/fr/es); others fall back to English names unless a
+// translation override file provides them (see api.ts applyNameOverrides).
 export const SUPPORTED_LANGUAGES: { code: string; label: string; tesseract: string }[] = [
   { code: 'en', label: 'English', tesseract: 'eng' },
+  { code: 'pt', label: 'Português (Brasil)', tesseract: 'por' },
   { code: 'fr', label: 'Français', tesseract: 'fra' },
   { code: 'es', label: 'Español', tesseract: 'spa' },
   { code: 'de', label: 'Deutsch', tesseract: 'deu' },

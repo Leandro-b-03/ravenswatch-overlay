@@ -1,3 +1,5 @@
+import { setUiLanguage, t } from '../../shared/i18n'
+
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T
 
 const hud = $<HTMLDivElement>('hud')
@@ -26,7 +28,7 @@ let remaining = dayPhaseSec
 let running = false
 
 function renderTimer(): void {
-  phaseLabel.textContent = phase === 'day' ? 'Day' : 'Night'
+  phaseLabel.textContent = phase === 'day' ? t('ov.day') : t('ov.night')
   phaseLabel.className = phase
   phaseCount.textContent = String(day)
   timerState.textContent = running ? '▶' : '⏸'
@@ -171,32 +173,36 @@ window.overlayAPI.onPositionReset(() => {
 window.overlayAPI.onInteractiveModeChanged((on) => {
   interactive = on
   document.body.classList.toggle('interactive', on)
-  modeBadge.textContent = on ? 'interactive (Ctrl+Shift+O)' : 'click-through'
+  modeBadge.textContent = on ? t('ov.interactive') : t('ov.clickThrough')
+})
+
+// Status notes from main: what detection is doing / what's blocking it.
+window.overlayAPI.onDetectionNote((key) => {
+  detectionStatus.textContent = t(key as Parameters<typeof t>[0])
+  detectionStatus.className = key === 'note.active' ? 'active' : 'idle'
 })
 
 window.overlayAPI.onOverlayState((state) => {
   if (state.kind === 'waiting') {
-    heroName.textContent = state.heroName ?? 'No build'
-    buildTitle.textContent = state.buildTitle ?? 'select a build in the control panel'
-    detectionStatus.textContent = 'waiting for talent choice…'
-    detectionStatus.className = 'idle'
+    heroName.textContent = state.heroName ?? t('ov.noBuild')
+    buildTitle.textContent = state.buildTitle ?? t('ov.selectBuild')
     pickBanner.classList.add('hidden')
     setTips(state.tips ?? [])
     return
   }
 
   if (state.kind === 'detected') {
-    detectionStatus.textContent = 'talent choice detected'
+    detectionStatus.textContent = t('ov.detected')
     detectionStatus.className = 'active'
     const sorted = [...state.picks].sort((a, b) => a.priorityRank - b.priorityRank)
     pickContent.innerHTML = ''
     for (const pick of sorted) {
       const line = document.createElement('div')
       line.className = 'pick-line'
-      line.textContent = `★ PICK: ${pick.talentName}`
+      line.textContent = t('ov.pick', { name: pick.talentName })
       const rank = document.createElement('span')
       rank.className = 'rank'
-      rank.textContent = `#${pick.priorityRank} in build`
+      rank.textContent = t('ov.rank', { n: pick.priorityRank })
       line.appendChild(rank)
       pickContent.appendChild(line)
     }
@@ -205,12 +211,12 @@ window.overlayAPI.onOverlayState((state) => {
   }
 
   // no-match
-  detectionStatus.textContent = 'talent choice detected'
+  detectionStatus.textContent = t('ov.detected')
   detectionStatus.className = 'active'
   pickContent.innerHTML = ''
   const line = document.createElement('div')
   line.className = 'pick-line muted'
-  line.textContent = 'no priority here — reroll?'
+  line.textContent = t('ov.reroll')
   pickContent.appendChild(line)
   pickBanner.classList.remove('hidden')
 })
@@ -218,10 +224,16 @@ window.overlayAPI.onOverlayState((state) => {
 // ---------- init ----------
 void (async () => {
   const settings = await window.overlayAPI.getSettings()
+  setUiLanguage(settings.uiLanguage)
   dayPhaseSec = settings.dayPhaseSec
   nightPhaseSec = settings.nightPhaseSec
   remaining = dayPhaseSec
   applyPosition(settings.overlayPosition)
+  $('tip-label').textContent = t('ov.tip')
+  modeBadge.textContent = t('ov.clickThrough')
+  heroName.textContent = t('ov.noBuild')
+  buildTitle.textContent = t('ov.selectBuild')
+  detectionStatus.textContent = t('ov.waiting')
   renderTimer()
   renderTally()
 })()

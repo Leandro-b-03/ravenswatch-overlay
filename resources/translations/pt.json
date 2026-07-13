@@ -1,0 +1,4 @@
+{
+  "_readme": "Mapa de UUID do talento → nome em português, usado pelo OCR quando o jogo está em PT-BR. Os UUIDs vêm do catálogo do BuildMaker (painel → Editor mostra os nomes; os ids estão no cache em %APPDATA%/ravenswatch-overlay/cache/hero-<herói>-en.json). Adicione entradas aqui ou em %APPDATA%/ravenswatch-overlay/translations/pt.json (este último tem prioridade).",
+  "_example": "\"fcb4cce4-b7c9-4060-b115-d929e9f03e84\": \"Astrologia\""
+}

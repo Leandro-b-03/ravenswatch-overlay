@@ -307,6 +307,158 @@ button:disabled {
   cursor: crosshair;
 }
 
+/* build detail (cookbook) */
+#build-detail.hidden {
+  display: none;
+}
+
+#build-detail h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+#build-detail .right {
+  margin-left: auto;
+}
+
+#detail-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 10px;
+}
+
+.detail-col h3 {
+  font-size: 14px;
+  color: var(--gold);
+  margin: 16px 0 8px;
+}
+
+.detail-talent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--card);
+  border: 1px solid rgba(255, 204, 51, 0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.detail-talent img {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.detail-talent .dt-rank {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 16px;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 10px;
+}
+
+.detail-talent .dt-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.detail-talent .dt-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.detail-talent .dt-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.detail-talent .dt-desc {
+  font-size: 12px;
+  color: #cfc6b4;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.detail-talent .dt-desc .key_words {
+  color: var(--gold);
+}
+
+.detail-talent .dt-desc .improvement {
+  color: var(--green);
+}
+
+.detail-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.detail-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+}
+
+.detail-item .di-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.detail-item .di-quality {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.detail-item .di-qty {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+#detail-guide {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #d9cfba;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+#detail-guide h2,
+#detail-guide h3 {
+  color: var(--gold);
+  font-size: 15px;
+  margin: 14px 0 6px;
+}
+
+#detail-guide p {
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+
+#detail-guide .key_words {
+  color: var(--gold);
+}
+
+#detail-guide .improvement {
+  color: var(--green);
+}
+
 .settings-block {
   max-width: 480px;
   margin-bottom: 26px;

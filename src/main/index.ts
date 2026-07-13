@@ -93,6 +93,8 @@ app.whenReady().then(async () => {
   overlayWindow.webContents.once('did-finish-load', () => {
     overlayWindow?.show()
     detection.pushOverlayWaiting()
+    // small delay so the overlay's async init (settings/i18n) settles first
+    setTimeout(() => detection.resendNote(), 1500)
     if (!splash.isDestroyed()) splash.close()
     openPanel()
   })

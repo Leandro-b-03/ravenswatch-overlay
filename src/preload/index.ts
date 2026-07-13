@@ -54,6 +54,8 @@ const overlayAPI = {
   browseBuilds: (hero: string, page: number): Promise<CommunityBuildSummary[]> =>
     ipcRenderer.invoke('builds:browse', hero, page),
   importBuild: (urlOrId: string): Promise<Build> => ipcRenderer.invoke('builds:import', urlOrId),
+  fetchBuild: (id: string): Promise<Build> => ipcRenderer.invoke('builds:fetch', id),
+  openExternal: (url: string): Promise<void> => ipcRenderer.invoke('shell:openExternal', url),
 
   // capture / calibration
   getCaptureSources: (): Promise<CaptureSource[]> => ipcRenderer.invoke('capture:sources'),
@@ -86,6 +88,12 @@ const overlayAPI = {
   },
   sendWorkerResults: (results: MatchResult[], region: CalibrationRegion): void => {
     ipcRenderer.send('worker:results', results, region)
+  },
+  sendWorkerReady: (): void => {
+    ipcRenderer.send('worker:ready')
+  },
+  onDetectionNote: (cb: (key: string) => void): void => {
+    ipcRenderer.on('overlay:detection-note', (_e, key: string) => cb(key))
   }
 }
 

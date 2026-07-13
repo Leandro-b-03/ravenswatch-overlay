@@ -30,7 +30,12 @@ let busy = false
 
 window.overlayAPI.onWorkerConfigure(async (cfg) => {
   config = cfg
-  await Promise.all([ensureStream(cfg.sourceId), ensureOcr(cfg.tesseractLang)])
+  try {
+    await Promise.all([ensureStream(cfg.sourceId), ensureOcr(cfg.tesseractLang)])
+    window.overlayAPI.sendWorkerReady()
+  } catch (err) {
+    console.error('worker configure failed', err)
+  }
 })
 
 window.overlayAPI.onWorkerScan(async () => {

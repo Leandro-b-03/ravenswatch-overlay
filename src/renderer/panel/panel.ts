@@ -1,11 +1,13 @@
 import type {
   Build,
   CommunityBuildSummary,
+  GameItem,
   Hero,
   Settings,
   Talent
 } from '../../shared/types'
 import { SUPPORTED_LANGUAGES } from '../../shared/types'
+import { setUiLanguage, t, UI_LANGUAGES, type I18nKey } from '../../shared/i18n'
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T
 
@@ -14,12 +16,28 @@ const SITE = 'https://buildmaker.ravenswatch.com'
 let settings: Settings
 let heroes: Hero[] = []
 let builds: Build[] = []
+let itemCatalog: Map<string, GameItem> | null = null
+
+// ---------- i18n ----------
+function applyI18n(): void {
+  document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
+    el.textContent = t(el.dataset.i18n as I18nKey)
+  })
+  document.querySelectorAll<HTMLElement>('[data-i18n-placeholder]').forEach((el) => {
+    ;(el as HTMLInputElement).placeholder = t(el.dataset.i18nPlaceholder as I18nKey)
+  })
+  document
+    .querySelectorAll<HTMLOptionElement>('#cal-cards option')
+    .forEach((o) => (o.textContent = `${o.value} ${t('cal.cards')}`))
+  void refreshDetectionState()
+}
 
 // ---------- tabs ----------
 document.querySelectorAll<HTMLButtonElement>('nav button').forEach((btn) => {
   btn.addEventListener('click', () => {
+    closeDetail()
     document.querySelectorAll('nav button').forEach((b) => b.classList.remove('active'))
-    document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'))
+    document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'))
     btn.classList.add('active')
     $(`tab-${btn.dataset.tab}`).classList.add('active')
     if (btn.dataset.tab === 'calibration') void initCalibration()
@@ -31,14 +49,16 @@ function setStatus(el: HTMLElement, msg: string, kind: '' | 'error' | 'ok' = '')
   el.className = `status ${kind}`.trim()
 }
 
-function iconUrl(t: Talent): string {
-  const u = t.iconUrl || ''
+function iconUrl(u: string | undefined): string {
+  if (!u) return ''
   return u.startsWith('http') ? u : `${SITE}${u}`
 }
 
 // ---------- init ----------
 async function init(): Promise<void> {
   settings = await window.overlayAPI.getSettings()
+  setUiLanguage(settings.uiLanguage)
+  applyI18n()
   builds = await window.overlayAPI.listBuilds()
   renderBuilds()
   initSettings()
@@ -46,7 +66,7 @@ async function init(): Promise<void> {
     heroes = await window.overlayAPI.getHeroes(settings.gameLanguage)
     fillHeroSelects()
   } catch {
-    setStatus($('browse-status'), 'Could not load hero list (offline?)', 'error')
+    setStatus($('browse-status'), t('browse.heroesOffline'), 'error')
   }
   void refreshDetectionState()
 }
@@ -69,7 +89,7 @@ function renderBuilds(): void {
   const list = $('builds-list')
   list.innerHTML = ''
   if (builds.length === 0) {
-    list.innerHTML = '<div class="status">No builds yet — import one or use the editor.</div>'
+    list.innerHTML = `<div class="status">${t('builds.none')}</div>`
     return
   }
   for (const b of builds) {
@@ -77,16 +97,18 @@ function renderBuilds(): void {
     card.className = 'build-card' + (settings.activeBuildId === b.id ? ' active-build' : '')
     const chips = b.talents
       .slice(0, 10)
-      .map((t) => `<span class="rarity-${t.rarity}">${escapeHtml(t.name)}</span>`)
+      .map((tal) => `<span class="rarity-${tal.rarity}">${escapeHtml(tal.name)}</span>`)
       .join('')
     card.innerHTML = `
       <h4>${escapeHtml(b.title)}</h4>
-      <div class="meta">${escapeHtml(b.hero)}${b.author ? ' · by ' + escapeHtml(b.author) : ''} · ${b.source}</div>
+      <div class="meta">${escapeHtml(b.hero)}${b.author ? ` · ${t('builds.by')} ` + escapeHtml(b.author) : ''} · ${b.source}</div>
       <div class="talent-chips">${chips}</div>
       <div class="actions">
-        <button data-act="activate">${settings.activeBuildId === b.id ? '✓ Active' : 'Set active'}</button>
-        <button data-act="delete">Delete</button>
+        <button data-act="view">${t('builds.view')}</button>
+        <button data-act="activate">${settings.activeBuildId === b.id ? t('builds.active') : t('builds.setActive')}</button>
+        <button data-act="delete">${t('builds.delete')}</button>
       </div>`
+    card.querySelector<HTMLButtonElement>('[data-act="view"]')!.onclick = () => openDetail(b)
     card.querySelector<HTMLButtonElement>('[data-act="activate"]')!.onclick = async () => {
       settings = await window.overlayAPI.updateSettings({ activeBuildId: b.id })
       renderBuilds()
@@ -102,12 +124,16 @@ function renderBuilds(): void {
 
 $('btn-import').onclick = async () => {
   const input = $<HTMLInputElement>('import-url')
-  setStatus($('import-status'), 'Importing…')
+  setStatus($('import-status'), t('builds.importing'))
   try {
     const build = await window.overlayAPI.importBuild(input.value)
     builds = await window.overlayAPI.listBuilds()
     renderBuilds()
-    setStatus($('import-status'), `Imported “${build.title}” (${build.talents.length} talents)`, 'ok')
+    setStatus(
+      $('import-status'),
+      t('builds.imported', { title: build.title, count: build.talents.length }),
+      'ok'
+    )
     input.value = ''
   } catch (err) {
     setStatus($('import-status'), String((err as Error).message ?? err), 'error')
@@ -120,12 +146,12 @@ let browsePage = 1
 async function loadBrowse(): Promise<void> {
   const hero = $<HTMLSelectElement>('browse-hero').value
   if (!hero) return
-  setStatus($('browse-status'), 'Loading…')
+  setStatus($('browse-status'), t('browse.loading'))
   $('browse-page').textContent = String(browsePage)
   try {
     const results = await window.overlayAPI.browseBuilds(hero, browsePage)
     renderBrowse(results)
-    setStatus($('browse-status'), results.length ? '' : 'No builds on this page.')
+    setStatus($('browse-status'), results.length ? '' : t('browse.empty'))
   } catch (err) {
     setStatus($('browse-status'), String((err as Error).message ?? err), 'error')
   }
@@ -139,19 +165,32 @@ function renderBrowse(results: CommunityBuildSummary[]): void {
     card.className = 'build-card'
     const chips = (b.talents ?? [])
       .slice(0, 10)
-      .map((t) => `<span class="rarity-${t.rarity}">${escapeHtml(t.name)}</span>`)
+      .map((tal) => `<span class="rarity-${tal.rarity}">${escapeHtml(tal.name)}</span>`)
       .join('')
     card.innerHTML = `
       <h4>${escapeHtml(b.title || '(untitled)')}</h4>
-      <div class="meta">${escapeHtml(b.hero)}${b.user?.username ? ' · by ' + escapeHtml(b.user.username) : ''} · ♥ ${b.likes?.length ?? 0}</div>
+      <div class="meta">${escapeHtml(b.hero)}${b.user?.username ? ` · ${t('builds.by')} ` + escapeHtml(b.user.username) : ''} · ♥ ${b.likes?.length ?? 0}</div>
       <div class="talent-chips">${chips}</div>
-      <div class="actions"><button>Import</button></div>`
-    card.querySelector('button')!.onclick = async () => {
+      <div class="actions">
+        <button data-act="view">${t('builds.view')}</button>
+        <button data-act="import">${t('builds.import')}</button>
+      </div>`
+    card.querySelector<HTMLButtonElement>('[data-act="view"]')!.onclick = async () => {
+      setStatus($('browse-status'), t('detail.loading'))
+      try {
+        const full = await window.overlayAPI.fetchBuild(b._id)
+        setStatus($('browse-status'), '')
+        openDetail(full)
+      } catch (err) {
+        setStatus($('browse-status'), String((err as Error).message ?? err), 'error')
+      }
+    }
+    card.querySelector<HTMLButtonElement>('[data-act="import"]')!.onclick = async () => {
       try {
         await window.overlayAPI.importBuild(b._id)
         builds = await window.overlayAPI.listBuilds()
         renderBuilds()
-        setStatus($('browse-status'), `Imported “${b.title}”`, 'ok')
+        setStatus($('browse-status'), t('builds.imported', { title: b.title, count: (b.talents ?? []).length }), 'ok')
       } catch (err) {
         setStatus($('browse-status'), String((err as Error).message ?? err), 'error')
       }
@@ -175,10 +214,122 @@ $('btn-browse-next').onclick = () => {
   void loadBrowse()
 }
 
-// first visit to browse tab loads automatically once heroes exist
 document.querySelector<HTMLButtonElement>('[data-tab="browse"]')!.addEventListener('click', () => {
   if ($('browse-list').childElementCount === 0) void loadBrowse()
 })
+
+// ---------- build detail (cookbook) ----------
+const ALLOWED_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'STRONG', 'EM', 'BR', 'SPAN', 'UL', 'OL', 'LI'])
+
+function sanitizeInto(target: HTMLElement, html: string): void {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const walk = (src: Node, dst: Node): void => {
+    for (const child of Array.from(src.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        dst.appendChild(document.createTextNode(child.textContent ?? ''))
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as Element
+        if (ALLOWED_TAGS.has(el.tagName)) {
+          const clean = document.createElement(el.tagName.toLowerCase())
+          const cls = el.getAttribute('class')
+          if (cls && /^[\w -]+$/.test(cls)) clean.className = cls
+          walk(el, clean)
+          dst.appendChild(clean)
+        } else {
+          walk(el, dst) // unwrap unknown tags, keep their text
+        }
+      }
+    }
+  }
+  target.innerHTML = ''
+  walk(doc.body, target)
+}
+
+async function getItemCatalog(): Promise<Map<string, GameItem>> {
+  if (itemCatalog) return itemCatalog
+  const items = await window.overlayAPI.getItems()
+  itemCatalog = new Map(items.map((i) => [i.id, i]))
+  return itemCatalog
+}
+
+let detailReturnTab = 'builds'
+
+function openDetail(build: Build): void {
+  detailReturnTab =
+    document.querySelector<HTMLButtonElement>('nav button.active')?.dataset.tab ?? 'builds'
+  document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'))
+  $('build-detail').classList.remove('hidden')
+
+  $('detail-title').textContent = build.title
+  $('detail-meta').textContent =
+    `${build.hero}${build.author ? ` · ${t('builds.by')} ${build.author}` : ''}`
+  const srcBtn = $<HTMLButtonElement>('btn-detail-source')
+  srcBtn.style.display = build.sourceUrl ? '' : 'none'
+  srcBtn.onclick = () => void window.overlayAPI.openExternal(build.sourceUrl!)
+
+  // talents in priority order, with icons + full descriptions
+  const talentsEl = $('detail-talents')
+  talentsEl.innerHTML = ''
+  build.talents.forEach((tal: Talent, i: number) => {
+    const row = document.createElement('div')
+    row.className = 'detail-talent'
+    row.innerHTML = `
+      <div class="dt-rank">${i + 1}</div>
+      <img src="${iconUrl(tal.iconUrl)}" alt="" loading="lazy" />
+      <div>
+        <div class="dt-head">
+          <span class="dt-name">${escapeHtml(tal.name)}</span>
+          <span class="dt-badge">${escapeHtml(tal.rarity)} · ${escapeHtml(tal.type)}</span>
+        </div>
+        <div class="dt-desc"></div>
+      </div>`
+    const desc = row.querySelector<HTMLDivElement>('.dt-desc')!
+    sanitizeInto(desc, (tal.descriptions ?? []).join('<br/>'))
+    talentsEl.appendChild(row)
+  })
+
+  // items resolved against the catalog
+  const itemsEl = $('detail-items')
+  itemsEl.innerHTML = ''
+  void getItemCatalog().then((catalog) => {
+    for (const ref of build.items) {
+      const item = catalog.get(ref.id)
+      if (!item) continue
+      const row = document.createElement('div')
+      row.className = 'detail-item'
+      row.innerHTML = `
+        <img src="${iconUrl(item.icon ?? '')}" alt="" loading="lazy" />
+        <div>
+          <div class="di-name">${escapeHtml(item.name)}</div>
+          <div class="di-quality">${escapeHtml(item.quality_name ?? '')}</div>
+        </div>
+        <span class="di-qty">${ref.quantity > 1 ? t('detail.quantity', { n: ref.quantity }) : ''}</span>`
+      itemsEl.appendChild(row)
+    }
+  })
+
+  // guide
+  const guide = $('detail-guide')
+  if (build.description || build.notes) {
+    sanitizeInto(guide, build.description ?? '')
+    if (build.notes) {
+      const notes = document.createElement('p')
+      notes.textContent = build.notes
+      guide.appendChild(notes)
+    }
+  } else {
+    guide.textContent = t('detail.noGuide')
+  }
+}
+
+function closeDetail(): void {
+  $('build-detail').classList.add('hidden')
+}
+
+$('btn-detail-back').onclick = () => {
+  closeDetail()
+  $(`tab-${detailReturnTab}`).classList.add('active')
+}
 
 // ---------- editor ----------
 let editorCatalog: Talent[] = []
@@ -192,7 +343,7 @@ document.querySelector<HTMLButtonElement>('[data-tab="editor"]')!.addEventListen
 async function loadEditorCatalog(): Promise<void> {
   const hero = $<HTMLSelectElement>('editor-hero').value
   if (!hero) return
-  setStatus($('editor-status'), 'Loading talent catalog…')
+  setStatus($('editor-status'), t('editor.loadingCatalog'))
   try {
     const heroData = await window.overlayAPI.getHero(hero, settings.gameLanguage)
     editorCatalog = heroData.talents ?? []
@@ -204,12 +355,12 @@ async function loadEditorCatalog(): Promise<void> {
   }
 }
 
-function talentRow(t: Talent, extra: string): HTMLDivElement {
+function talentRow(tal: Talent, extra: string): HTMLDivElement {
   const row = document.createElement('div')
   row.className = 'talent-row'
-  row.innerHTML = `${extra}<img src="${iconUrl(t)}" alt="" loading="lazy" />
-    <span class="t-name">${escapeHtml(t.name)}</span>
-    <span class="t-meta">${escapeHtml(t.rarity)} · ${escapeHtml(t.type)}</span>`
+  row.innerHTML = `${extra}<img src="${iconUrl(tal.iconUrl)}" alt="" loading="lazy" />
+    <span class="t-name">${escapeHtml(tal.name)}</span>
+    <span class="t-meta">${escapeHtml(tal.rarity)} · ${escapeHtml(tal.type)}</span>`
   return row
 }
 
@@ -218,17 +369,17 @@ function renderEditor(): void {
   const picks = $('editor-picks')
   cat.innerHTML = ''
   picks.innerHTML = ''
-  for (const t of editorCatalog) {
-    if (editorPicks.some((p) => p.id === t.id)) continue
-    const row = talentRow(t, '')
+  for (const tal of editorCatalog) {
+    if (editorPicks.some((p) => p.id === tal.id)) continue
+    const row = talentRow(tal, '')
     row.onclick = () => {
-      editorPicks.push(t)
+      editorPicks.push(tal)
       renderEditor()
     }
     cat.appendChild(row)
   }
-  editorPicks.forEach((t, i) => {
-    const row = talentRow(t, `<span class="t-rank">${i + 1}</span>`)
+  editorPicks.forEach((tal, i) => {
+    const row = talentRow(tal, `<span class="t-rank">${i + 1}</span>`)
     row.draggable = true
     row.onclick = () => {
       editorPicks.splice(i, 1)
@@ -251,7 +402,7 @@ $('btn-editor-save').onclick = async () => {
   const hero = $<HTMLSelectElement>('editor-hero').value
   const title = $<HTMLInputElement>('editor-title').value.trim()
   if (!hero || !title || editorPicks.length === 0) {
-    setStatus($('editor-status'), 'Pick a hero, a title, and at least one talent.', 'error')
+    setStatus($('editor-status'), t('editor.needFields'), 'error')
     return
   }
   const build: Build = {
@@ -265,7 +416,7 @@ $('btn-editor-save').onclick = async () => {
   }
   builds = await window.overlayAPI.saveBuild(build)
   renderBuilds()
-  setStatus($('editor-status'), `Saved “${title}”.`, 'ok')
+  setStatus($('editor-status'), t('editor.saved', { title }), 'ok')
 }
 
 // ---------- calibration ----------
@@ -296,7 +447,7 @@ $('cal-source').onchange = () => void startCalStream($<HTMLSelectElement>('cal-s
 
 async function startCalStream(sourceId: string): Promise<void> {
   if (!sourceId) return
-  calStream?.getTracks().forEach((t) => t.stop())
+  calStream?.getTracks().forEach((track) => track.stop())
   try {
     calStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -314,9 +465,9 @@ async function startCalStream(sourceId: string): Promise<void> {
     await calVideo.play()
     cancelAnimationFrame(calRafId)
     drawCalFrame()
-    setStatus($('cal-status'), 'Drag a box over the talent-card area, then Save region.')
+    setStatus($('cal-status'), t('cal.drag'))
   } catch (err) {
-    setStatus($('cal-status'), `Capture failed: ${String((err as Error).message ?? err)}`, 'error')
+    setStatus($('cal-status'), t('cal.failed', { error: String((err as Error).message ?? err) }), 'error')
   }
 }
 
@@ -391,11 +542,28 @@ $('btn-cal-save').onclick = async () => {
     captureWidth: w,
     captureHeight: h
   })
-  setStatus($('cal-status'), `Saved calibration for ${key}.`, 'ok')
+  setStatus($('cal-status'), t('cal.saved', { key }), 'ok')
 }
 
 // ---------- settings ----------
 function initSettings(): void {
+  const uiSel = $<HTMLSelectElement>('setting-ui-language')
+  uiSel.innerHTML = ''
+  for (const l of UI_LANGUAGES) {
+    const opt = document.createElement('option')
+    opt.value = l.code
+    opt.textContent = l.label
+    uiSel.appendChild(opt)
+  }
+  uiSel.value = settings.uiLanguage
+  uiSel.onchange = async () => {
+    settings = await window.overlayAPI.updateSettings({ uiLanguage: uiSel.value })
+    setUiLanguage(settings.uiLanguage)
+    applyI18n()
+    renderBuilds()
+    void checkLanguage()
+  }
+
   const daySec = $<HTMLInputElement>('setting-day-sec')
   const nightSec = $<HTMLInputElement>('setting-night-sec')
   daySec.value = String(settings.dayPhaseSec)
@@ -405,14 +573,14 @@ function initSettings(): void {
       dayPhaseSec: Math.max(30, Number(daySec.value) || 540),
       nightPhaseSec: Math.max(30, Number(nightSec.value) || 150)
     })
-    setStatus($('timer-save-status'), 'Saved — applies on next overlay run/reset.', 'ok')
+    setStatus($('timer-save-status'), t('settings.timerSaved'), 'ok')
   }
   daySec.onchange = () => void saveTimer()
   nightSec.onchange = () => void saveTimer()
 
   $('btn-reset-hud').onclick = async () => {
     settings = await window.overlayAPI.resetOverlayPosition()
-    setStatus($('hud-reset-status'), 'HUD moved back to the top-right corner.', 'ok')
+    setStatus($('hud-reset-status'), t('settings.hudReset'), 'ok')
   }
 
   const sel = $<HTMLSelectElement>('setting-language')
@@ -426,11 +594,11 @@ function initSettings(): void {
   sel.value = settings.gameLanguage
   sel.onchange = async () => {
     settings = await window.overlayAPI.updateSettings({ gameLanguage: sel.value })
-    checkLanguage()
+    void checkLanguage()
     heroes = await window.overlayAPI.getHeroes(sel.value)
     fillHeroSelects()
   }
-  checkLanguage()
+  void checkLanguage()
 }
 
 async function checkLanguage(): Promise<void> {
@@ -443,22 +611,20 @@ async function checkLanguage(): Promise<void> {
     const localized = await window.overlayAPI.isLanguageLocalized(settings.gameLanguage)
     setStatus(
       warn,
-      localized
-        ? 'Talent names are localized for this language — OCR will match native text.'
-        : 'BuildMaker has no translation for this language: OCR will match ENGLISH talent names. Set the game to English for reliable detection.',
+      localized ? t('settings.langLocalized') : t('settings.langFallback'),
       localized ? 'ok' : 'error'
     )
   } catch {
-    setStatus(warn, 'Could not verify language support (offline?).')
+    setStatus(warn, t('settings.langUnknown'))
   }
 }
 
 // ---------- detection controls ----------
 async function refreshDetectionState(): Promise<void> {
   const running = await window.overlayAPI.isDetectionRunning()
-  $('detection-state').textContent = running ? 'detection on' : 'detection off'
+  $('detection-state').textContent = running ? t('detection.on') : t('detection.off')
   $('detection-state').className = running ? 'on' : 'off'
-  $('btn-detection-toggle').textContent = running ? 'Stop detection' : 'Start detection'
+  $('btn-detection-toggle').textContent = running ? t('detection.stop') : t('detection.start')
 }
 
 $('btn-detection-toggle').onclick = async () => {

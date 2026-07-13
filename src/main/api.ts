@@ -42,7 +42,42 @@ export async function fetchHero(rawName: string, lang: string): Promise<Hero> {
     `hero-${rawName}-${lang}`,
     `${SITE}/api/game-heroes/${rawName}?lang=${lang}`
   )
-  return { ...raw, talents: heroSkillsToTalents(raw.skills) }
+  return { ...raw, talents: applyNameOverrides(heroSkillsToTalents(raw.skills), lang) }
+}
+
+// Community/user-provided localized talent names for languages BuildMaker
+// doesn't translate (e.g. pt). Files map talent UUID → localized name:
+//   <resources>/translations/<lang>.json   (shipped with the app)
+//   <userData>/translations/<lang>.json    (user-editable, wins on conflict)
+function loadNameOverrides(lang: string): Record<string, string> {
+  const { app } = require('electron') as typeof import('electron')
+  const { readFileSync } = require('fs') as typeof import('fs')
+  const { join } = require('path') as typeof import('path')
+  const bases = [
+    app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources'),
+    app.getPath('userData')
+  ]
+  const merged: Record<string, string> = {}
+  for (const base of bases) {
+    try {
+      const data = JSON.parse(
+        readFileSync(join(base, 'translations', `${lang}.json`), 'utf-8')
+      ) as Record<string, string>
+      for (const [k, v] of Object.entries(data)) {
+        if (!k.startsWith('_')) merged[k] = v // "_readme" etc. are documentation keys
+      }
+    } catch {
+      /* file absent — fine */
+    }
+  }
+  return merged
+}
+
+function applyNameOverrides(talents: Talent[], lang: string): Talent[] {
+  if (lang === 'en') return talents
+  const overrides = loadNameOverrides(lang)
+  if (Object.keys(overrides).length === 0) return talents
+  return talents.map((t) => (overrides[t.id] ? { ...t, name: overrides[t.id] } : t))
 }
 
 export function fetchItems(): Promise<GameItem[]> {
@@ -98,8 +133,10 @@ export async function fetchBuild(id: string): Promise<Build> {
 
 // The hero endpoint returns English names when a language isn't localized.
 // Detect that so the UI can warn the user their OCR will match English text.
+// A translation override file also counts as localized.
 export async function isLanguageLocalized(lang: string): Promise<boolean> {
   if (lang === 'en') return true
+  if (Object.keys(loadNameOverrides(lang)).length > 0) return true
   const [en, other] = await Promise.all([fetchHero('merlin', 'en'), fetchHero('merlin', lang)])
   const enNames = (en.talents ?? []).map((t) => t.name).join('|')
   const otherNames = (other.talents ?? []).map((t) => t.name).join('|')

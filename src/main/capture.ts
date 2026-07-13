@@ -16,8 +16,24 @@ export async function listCaptureSources(): Promise<CaptureSource[]> {
   }))
 }
 
-// Best-effort auto-pick: a window whose title contains "ravenswatch".
+// Windows that contain "ravenswatch" but are NOT the game: this app's own
+// windows, the project folder in Explorer, browser tabs about the game, etc.
+const NOT_THE_GAME = /overlay|explorer|panel|visual studio|code|chrome|edge|firefox|discord/i
+
+export function looksLikeGameWindow(name: string): boolean {
+  const n = name.trim().toLowerCase()
+  if (!n.includes('ravenswatch')) return false
+  if (NOT_THE_GAME.test(n)) return false
+  return true
+}
+
 export async function findGameSource(): Promise<CaptureSource | null> {
   const sources = await listCaptureSources()
-  return sources.find((s) => s.name.toLowerCase().includes('ravenswatch')) ?? null
+  // Exact title first (the game window is titled just "Ravenswatch"),
+  // then any plausible non-app match.
+  return (
+    sources.find((s) => s.name.trim().toLowerCase() === 'ravenswatch') ??
+    sources.find((s) => looksLikeGameWindow(s.name)) ??
+    null
+  )
 }
