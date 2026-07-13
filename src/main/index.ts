@@ -1,5 +1,6 @@
 import { app, BrowserWindow, globalShortcut, Menu, Tray, nativeImage } from 'electron'
 import {
+  appIconPath,
   createOverlayWindow,
   createPanelWindow,
   createSplashWindow,
@@ -45,10 +46,7 @@ function openPanel(): void {
 }
 
 function createTray(): void {
-  // 16x16 dark raven-ish placeholder dot; replaced by real icon at packaging.
-  const icon = nativeImage.createFromDataURL(
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAVElEQVR4nGNgGAWMDAwM/xkYGP4TieFq/pMDmBgoBKMGMDAwMTAwMDIwMDD8JxLD1DKRawA2A/6TYyMuA/6TYyMuA/6TYyMuA/6TYyMuA0YBFAAA7yAT9x0mFioAAAAASUVORK5CYII='
-  )
+  const icon = nativeImage.createFromPath(appIconPath()).resize({ width: 16, height: 16 })
   tray = new Tray(icon)
   tray.setToolTip('Ravenswatch Overlay')
   tray.setContextMenu(

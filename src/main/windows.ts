@@ -1,7 +1,15 @@
-import { BrowserWindow, screen } from 'electron'
+import { app, BrowserWindow, screen } from 'electron'
 import { join } from 'path'
 
 const PRELOAD = join(__dirname, '../preload/index.js')
+
+export function appIconPath(): string {
+  // Packaged: extraResources places it under process.resourcesPath.
+  // Dev: read straight from the project's resources folder.
+  return app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(app.getAppPath(), 'resources/icon.png')
+}
 
 type Page = 'overlay' | 'panel' | 'splash' | 'worker'
 
@@ -26,6 +34,7 @@ export function createSplashWindow(): BrowserWindow {
     alwaysOnTop: true,
     resizable: false,
     skipTaskbar: true,
+    icon: appIconPath(),
     webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false }
   })
   loadPage(win, 'splash')
@@ -78,6 +87,7 @@ export function createPanelWindow(): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     title: 'Ravenswatch Overlay — Control Panel',
+    icon: appIconPath(),
     autoHideMenuBar: true,
     show: false,
     webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false }
