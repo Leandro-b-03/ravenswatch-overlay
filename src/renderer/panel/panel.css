@@ -112,6 +112,8 @@ main {
 }
 
 input[type='text'],
+input[type='number'],
+textarea,
 select {
   background: var(--card);
   border: 1px solid rgba(255, 204, 51, 0.25);
@@ -312,8 +314,16 @@ button:disabled {
 
 .settings-block label {
   display: block;
-  margin-bottom: 6px;
+  margin: 10px 0 6px;
   color: var(--muted);
+}
+
+#editor-notes {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  font-family: inherit;
+  margin-bottom: 12px;
 }
 
 .hotkeys td {

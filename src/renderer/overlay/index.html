@@ -14,12 +14,27 @@
         <span id="mode-badge">click-through</span>
       </div>
       <div id="build-title">select a build in the control panel</div>
-      <div id="hud-timer">
-        <span id="phase-label">Day</span>
+
+      <div id="hud-timer" title="Ctrl+Shift+T start/pause · Ctrl+Shift+N skip phase">
+        <span id="phase-label" class="day">Day</span>
         <span id="phase-count">1</span>
-        <span id="phase-clock">00:00</span>
+        <span id="timer-state">⏸</span>
+        <span id="phase-clock">--:--</span>
       </div>
+
+      <div id="hud-tally">
+        <button class="tally" data-kind="talent" title="Talents picked">T <b>0</b></button>
+        <button class="tally" data-kind="legendary" title="Legendaries picked">L <b>0</b></button>
+        <button class="tally" data-kind="cursed" title="Cursed picked">C <b>0</b></button>
+        <button id="tally-reset" title="Reset run (tally + timer)">↺</button>
+      </div>
+
       <div id="detection-status" class="idle">waiting for talent choice…</div>
+
+      <div id="tip-box" class="hidden" title="Ctrl+Shift+H next tip">
+        <span id="tip-label">TIP</span>
+        <span id="tip-text"></span>
+      </div>
     </div>
 
     <div id="pick-banner" class="hidden">

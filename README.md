@@ -24,6 +24,13 @@ See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture.
   the calibrated region, OCRs each card (Tesseract), fuzzy-matches against the
   hero's talent catalog, and flashes **★ PICK: <talent>** with its priority
   rank when a card is in your build — or "no priority here — reroll?" when not.
+- **Run timer** — day/night phase countdown with day counter; phase lengths
+  adjustable in Settings; start/pause/skip via hotkeys.
+- **Pick tally** — T/L/C counters on the HUD (click in interactive mode) plus
+  a run reset.
+- **Player tips** — the build author's guide (and your own notes on manual
+  builds) rotates as compact TIP lines on the HUD every 20 s or via hotkey.
+- **Movable HUD** — drag it anywhere in interactive mode; position persists.
 - **Multi-language** — talent catalogs and OCR language packs follow the game
   language setting. Languages BuildMaker doesn't localize fall back to English
   matching (the Settings tab warns you). CJK is out of scope for v1.
@@ -32,9 +39,12 @@ See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture.
 
 | Keys | Action |
 |---|---|
-| `Ctrl+Shift+O` | Toggle overlay interactive mode (move/inspect vs click-through) |
+| `Ctrl+Shift+O` | Toggle overlay interactive mode (drag the HUD to reposition it) |
 | `Ctrl+Shift+S` | Scan the talent screen once |
 | `Ctrl+Shift+P` | Open the control panel |
+| `Ctrl+Shift+T` | Start/pause the run timer |
+| `Ctrl+Shift+N` | Skip to the next phase (day ↔ night) |
+| `Ctrl+Shift+H` | Show the next tip from the build guide |
 
 ## Requirements
 

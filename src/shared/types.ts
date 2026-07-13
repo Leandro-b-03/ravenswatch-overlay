@@ -94,10 +94,12 @@ export interface Settings {
   detectionEnabled: boolean
   overlayPosition: { x: number; y: number } | null
   calibrations: Record<string, CalibrationRegion> // key: `${w}x${h}`
+  dayPhaseSec: number
+  nightPhaseSec: number
 }
 
 export type OverlayState =
-  | { kind: 'waiting'; heroName: string | null; buildTitle: string | null }
+  | { kind: 'waiting'; heroName: string | null; buildTitle: string | null; tips: string[] }
   | { kind: 'detected'; picks: DetectedPick[]; region: CalibrationRegion }
   | { kind: 'no-match'; region: CalibrationRegion }
 

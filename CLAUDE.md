@@ -146,7 +146,14 @@ Decision: **Option A.** Mention B in README as consciously rejected.
   ocr-bench` (6/6: 3 synthetic + a real Steam-store talent-card crop at
   1080p/900p/768p — the real stylized font OCRs at score 1.00), NSIS
   installer via electron-builder.
-- Hotkeys: Ctrl+Shift+O interactive, Ctrl+Shift+S scan once, Ctrl+Shift+P panel.
+- Hotkeys: Ctrl+Shift+O interactive, Ctrl+Shift+S scan once, Ctrl+Shift+P
+  panel, Ctrl+Shift+T timer start/pause, Ctrl+Shift+N skip phase,
+  Ctrl+Shift+H next tip.
+- Also implemented (2026-07-13): day/night run timer with adjustable phase
+  lengths, T/L/C pick tally, draggable HUD with persisted position, and
+  player tips — the build's description HTML (author's guide) + manual-build
+  notes parsed into rotating TIP lines (src/shared/tips.ts). BuildMaker has
+  NO comments API — the guide description is the only player commentary.
 - NOT yet verified against the real game: window capture of the actual game,
   detected/no-match banner in a live run, and OCR breadth (only one real
   talent-screen sample so far — the Steam store shot; still want Leandro's

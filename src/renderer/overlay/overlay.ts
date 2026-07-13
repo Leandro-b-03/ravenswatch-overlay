@@ -1,29 +1,170 @@
-const modeBadge = document.getElementById('mode-badge') as HTMLSpanElement
-const phaseClock = document.getElementById('phase-clock') as HTMLSpanElement
-const heroName = document.getElementById('hero-name') as HTMLSpanElement
-const buildTitle = document.getElementById('build-title') as HTMLDivElement
-const detectionStatus = document.getElementById('detection-status') as HTMLDivElement
-const pickBanner = document.getElementById('pick-banner') as HTMLDivElement
-const pickContent = document.getElementById('pick-content') as HTMLDivElement
+const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T
 
-let elapsedSeconds = 0
+const hud = $<HTMLDivElement>('hud')
+const modeBadge = $<HTMLSpanElement>('mode-badge')
+const heroName = $<HTMLSpanElement>('hero-name')
+const buildTitle = $<HTMLDivElement>('build-title')
+const detectionStatus = $<HTMLDivElement>('detection-status')
+const pickBanner = $<HTMLDivElement>('pick-banner')
+const pickContent = $<HTMLDivElement>('pick-content')
+const phaseLabel = $<HTMLSpanElement>('phase-label')
+const phaseCount = $<HTMLSpanElement>('phase-count')
+const phaseClock = $<HTMLSpanElement>('phase-clock')
+const timerState = $<HTMLSpanElement>('timer-state')
+const tipBox = $<HTMLDivElement>('tip-box')
+const tipText = $<HTMLSpanElement>('tip-text')
 
-function formatClock(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60)
+let interactive = false
+
+// ---------- day/night run timer ----------
+// Counts down the current phase; night end advances the day counter.
+let dayPhaseSec = 540
+let nightPhaseSec = 150
+let phase: 'day' | 'night' = 'day'
+let day = 1
+let remaining = dayPhaseSec
+let running = false
+
+function renderTimer(): void {
+  phaseLabel.textContent = phase === 'day' ? 'Day' : 'Night'
+  phaseLabel.className = phase
+  phaseCount.textContent = String(day)
+  timerState.textContent = running ? '▶' : '⏸'
+  const m = Math.floor(remaining / 60)
     .toString()
     .padStart(2, '0')
-  const seconds = (totalSeconds % 60).toString().padStart(2, '0')
-  return `${minutes}:${seconds}`
+  const s = (remaining % 60).toString().padStart(2, '0')
+  phaseClock.textContent = `${m}:${s}`
+}
+
+function nextPhase(): void {
+  if (phase === 'day') {
+    phase = 'night'
+    remaining = nightPhaseSec
+  } else {
+    phase = 'day'
+    day += 1
+    remaining = dayPhaseSec
+  }
+  renderTimer()
+}
+
+function resetRun(): void {
+  phase = 'day'
+  day = 1
+  remaining = dayPhaseSec
+  running = false
+  for (const kind of Object.keys(tally) as (keyof typeof tally)[]) tally[kind] = 0
+  renderTally()
+  renderTimer()
 }
 
 setInterval(() => {
-  elapsedSeconds += 1
-  phaseClock.textContent = formatClock(elapsedSeconds)
+  if (!running) return
+  remaining -= 1
+  if (remaining <= 0) nextPhase()
+  else renderTimer()
 }, 1000)
 
-window.overlayAPI.onInteractiveModeChanged((interactive) => {
-  document.body.classList.toggle('interactive', interactive)
-  modeBadge.textContent = interactive ? 'interactive (Ctrl+Shift+O)' : 'click-through'
+window.overlayAPI.onRunTimerToggle(() => {
+  running = !running
+  renderTimer()
+})
+
+window.overlayAPI.onRunTimerSkip(() => nextPhase())
+
+// ---------- pick tally ----------
+const tally = { talent: 0, legendary: 0, cursed: 0 }
+
+function renderTally(): void {
+  document.querySelectorAll<HTMLButtonElement>('#hud-tally .tally').forEach((btn) => {
+    const kind = btn.dataset.kind as keyof typeof tally
+    btn.querySelector('b')!.textContent = String(tally[kind])
+  })
+}
+
+document.querySelectorAll<HTMLButtonElement>('#hud-tally .tally').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const kind = btn.dataset.kind as keyof typeof tally
+    tally[kind] += 1
+    renderTally()
+  })
+})
+
+$('tally-reset').addEventListener('click', resetRun)
+
+// ---------- tips (player guide from the active build) ----------
+let tips: string[] = []
+let tipIndex = 0
+const TIP_ROTATE_MS = 20000
+let tipTimer: number | undefined
+
+function showTip(): void {
+  if (tips.length === 0) {
+    tipBox.classList.add('hidden')
+    return
+  }
+  tipBox.classList.remove('hidden')
+  tipText.textContent = tips[tipIndex % tips.length]
+}
+
+function nextTip(): void {
+  if (tips.length === 0) return
+  tipIndex = (tipIndex + 1) % tips.length
+  showTip()
+}
+
+function setTips(newTips: string[]): void {
+  tips = newTips
+  tipIndex = 0
+  showTip()
+  if (tipTimer !== undefined) clearInterval(tipTimer)
+  tipTimer = window.setInterval(nextTip, TIP_ROTATE_MS)
+}
+
+window.overlayAPI.onNextTip(nextTip)
+
+// ---------- draggable HUD (interactive mode) ----------
+let drag: { startX: number; startY: number; origX: number; origY: number } | null = null
+
+function applyPosition(pos: { x: number; y: number } | null): void {
+  if (!pos) return
+  hud.style.left = `${pos.x}px`
+  hud.style.top = `${pos.y}px`
+  hud.style.right = 'auto'
+}
+
+hud.addEventListener('mousedown', (e) => {
+  if (!interactive) return
+  if ((e.target as HTMLElement).closest('button')) return
+  const rect = hud.getBoundingClientRect()
+  drag = { startX: e.clientX, startY: e.clientY, origX: rect.left, origY: rect.top }
+  hud.classList.add('dragging')
+  e.preventDefault()
+})
+
+window.addEventListener('mousemove', (e) => {
+  if (!drag) return
+  const x = Math.max(0, drag.origX + e.clientX - drag.startX)
+  const y = Math.max(0, drag.origY + e.clientY - drag.startY)
+  applyPosition({ x, y })
+})
+
+window.addEventListener('mouseup', () => {
+  if (!drag) return
+  drag = null
+  hud.classList.remove('dragging')
+  const rect = hud.getBoundingClientRect()
+  void window.overlayAPI.updateSettings({
+    overlayPosition: { x: Math.round(rect.left), y: Math.round(rect.top) }
+  })
+})
+
+// ---------- mode + state ----------
+window.overlayAPI.onInteractiveModeChanged((on) => {
+  interactive = on
+  document.body.classList.toggle('interactive', on)
+  modeBadge.textContent = on ? 'interactive (Ctrl+Shift+O)' : 'click-through'
 })
 
 window.overlayAPI.onOverlayState((state) => {
@@ -33,6 +174,7 @@ window.overlayAPI.onOverlayState((state) => {
     detectionStatus.textContent = 'waiting for talent choice…'
     detectionStatus.className = 'idle'
     pickBanner.classList.add('hidden')
+    setTips(state.tips ?? [])
     return
   }
 
@@ -65,3 +207,14 @@ window.overlayAPI.onOverlayState((state) => {
   pickContent.appendChild(line)
   pickBanner.classList.remove('hidden')
 })
+
+// ---------- init ----------
+void (async () => {
+  const settings = await window.overlayAPI.getSettings()
+  dayPhaseSec = settings.dayPhaseSec
+  nightPhaseSec = settings.nightPhaseSec
+  remaining = dayPhaseSec
+  applyPosition(settings.overlayPosition)
+  renderTimer()
+  renderTally()
+})()
