@@ -8,6 +8,7 @@ import type {
 } from '../../shared/types'
 import { SUPPORTED_LANGUAGES } from '../../shared/types'
 import { setUiLanguage, t, UI_LANGUAGES, type I18nKey } from '../../shared/i18n'
+import { pickGameSource } from '../../shared/game-window'
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T
 
@@ -437,7 +438,7 @@ async function initCalibration(): Promise<void> {
     opt.textContent = s.name
     sel.appendChild(opt)
   }
-  const game = sources.find((s) => s.name.toLowerCase().includes('ravenswatch'))
+  const game = pickGameSource(sources)
   if (game) sel.value = game.id
   await startCalStream(sel.value)
 }
