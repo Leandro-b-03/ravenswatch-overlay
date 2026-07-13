@@ -84,4 +84,9 @@ export function registerIpc(deps: IpcDeps): void {
 
   // overlay chrome
   ipcMain.on('overlay:toggle-interactive', () => deps.toggleInteractive())
+  ipcMain.handle('overlay:resetPosition', () => {
+    const settings = store.updateSettings({ overlayPosition: null })
+    deps.overlay()?.webContents.send('overlay:position-reset')
+    return settings
+  })
 }

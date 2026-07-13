@@ -410,6 +410,11 @@ function initSettings(): void {
   daySec.onchange = () => void saveTimer()
   nightSec.onchange = () => void saveTimer()
 
+  $('btn-reset-hud').onclick = async () => {
+    settings = await window.overlayAPI.resetOverlayPosition()
+    setStatus($('hud-reset-status'), 'HUD moved back to the top-right corner.', 'ok')
+  }
+
   const sel = $<HTMLSelectElement>('setting-language')
   sel.innerHTML = ''
   for (const l of SUPPORTED_LANGUAGES) {

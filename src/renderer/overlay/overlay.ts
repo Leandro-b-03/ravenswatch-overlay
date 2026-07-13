@@ -160,6 +160,13 @@ window.addEventListener('mouseup', () => {
   })
 })
 
+window.overlayAPI.onPositionReset(() => {
+  // Back to the CSS default (top-right corner).
+  hud.style.left = ''
+  hud.style.top = ''
+  hud.style.right = ''
+})
+
 // ---------- mode + state ----------
 window.overlayAPI.onInteractiveModeChanged((on) => {
   interactive = on

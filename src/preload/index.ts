@@ -29,6 +29,10 @@ const overlayAPI = {
   onNextTip: (cb: () => void): void => {
     ipcRenderer.on('tips:next', () => cb())
   },
+  onPositionReset: (cb: () => void): void => {
+    ipcRenderer.on('overlay:position-reset', () => cb())
+  },
+  resetOverlayPosition: (): Promise<Settings> => ipcRenderer.invoke('overlay:resetPosition'),
 
   // settings
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
