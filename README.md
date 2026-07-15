@@ -5,6 +5,18 @@ from [BuildMaker](https://buildmaker.ravenswatch.com/), and during a run the
 overlay reads the talent-choice screen and highlights which card to pick.
 See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture.
 
+## Install
+
+Grab the latest version from the
+[releases page](https://github.com/Leandro-b-03/ravenswatch-overlay/releases):
+
+- **`Ravenswatch.Overlay.Setup.<version>.exe`** — one-click installer.
+- **`RavenswatchOverlay-<version>-win-unpacked.zip`** — portable: unzip
+  anywhere and run `Ravenswatch Overlay.exe`, no install needed.
+
+The binaries are not code-signed yet, so Windows SmartScreen will warn on
+first launch — choose **More info → Run anyway**.
+
 ## Features
 
 - **Overlay HUD** — transparent, always-on-top, click-through window over the
