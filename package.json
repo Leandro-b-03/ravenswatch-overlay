@@ -4,6 +4,7 @@
   "description": "Transparent desktop overlay companion for Ravenswatch",
   "main": "./out/main/index.js",
   "author": "Leandro",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",

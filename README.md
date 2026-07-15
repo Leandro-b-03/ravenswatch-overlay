@@ -125,3 +125,8 @@ catalogs cached for offline use. The app only calls buildmaker.ravenswatch.com
 - This overlay is an unofficial fan-made companion tool. It is not affiliated
   with, endorsed by, or supported by Nacon, Passtech Games, or the BuildMaker
   team.
+
+## License
+
+[MIT](LICENSE) — covers this project's code only, not any game content or
+BuildMaker data it displays.
