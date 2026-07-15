@@ -110,4 +110,18 @@ headless (synthesizes a 1080p talent screen and checks names + positions).
 
 Everything is local: builds and settings in `%APPDATA%/ravenswatch-overlay/`,
 catalogs cached for offline use. The app only calls buildmaker.ravenswatch.com
-(unofficial public API) to fetch heroes, talents, items, and builds.
+(undocumented public API) to fetch heroes, talents, items, and builds.
+
+## Credits
+
+- Hero, talent, item, and community-build data comes from
+  [Ravenswatch BuildMaker](https://buildmaker.ravenswatch.com/), the official
+  build-planning site for the game — plan your builds there. This app talks to
+  its public but undocumented API, so breakage on their updates is on us, not
+  them.
+- **Ravenswatch** © 2023 [Nacon](https://www.nacongaming.com/), developed by
+  [Passtech Games](https://www.passtechgames.com/). All game content, names,
+  and artwork belong to them.
+- This overlay is an unofficial fan-made companion tool. It is not affiliated
+  with, endorsed by, or supported by Nacon, Passtech Games, or the BuildMaker
+  team.
