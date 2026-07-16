@@ -1,0 +1,72 @@
+# Builds the Windows installer from source on every version tag and attaches
+# it to the matching GitHub release. This CI build is also a prerequisite for
+# free open-source code signing via SignPath Foundation (see README).
+#
+# Usage: bump "version" in package.json, then
+#   git tag v0.2.0 && git push origin v0.2.0
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - name: Build installer
+        run: npm run dist
+
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          Compress-Archive -Path "dist/win-unpacked/*" -DestinationPath "dist/RavenswatchOverlay-$version-win-unpacked.zip"
+
+      # ---- Code signing via SignPath Foundation (free for OSS) -------------
+      # Once the SignPath application is approved, uncomment and fill in the
+      # organization id / project & policy slugs, and add SIGNPATH_API_TOKEN
+      # to the repo secrets. Docs: https://about.signpath.io/documentation
+      #
+      # - name: Upload unsigned installer
+      #   id: unsigned
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: installer-unsigned
+      #     path: dist/*.exe
+      #
+      # - name: Submit signing request
+      #   uses: signpath/github-action-submit-signing-request@v1
+      #   with:
+      #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+      #     organization-id: '<signpath-org-id>'
+      #     project-slug: 'ravenswatch-overlay'
+      #     signing-policy-slug: 'release-signing'
+      #     github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+      #     wait-for-completion: true
+      #     output-artifact-directory: dist-signed
+      # ----------------------------------------------------------------------
+
+      - name: Attach artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml
+            dist/RavenswatchOverlay-*-win-unpacked.zip

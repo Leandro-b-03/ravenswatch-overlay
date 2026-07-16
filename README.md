@@ -91,6 +91,15 @@ npm run ocr-bench    # headless OCR+matching over test-assets/*.png
 npm run dist         # build the NSIS installer into dist/
 ```
 
+### Releasing
+
+Bump `version` in `package.json`, then push a matching tag — CI builds the
+installer from source and attaches it to the GitHub release:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
 ### OCR bench
 
 Drop talent-screen screenshots into `test-assets/`. Name them
