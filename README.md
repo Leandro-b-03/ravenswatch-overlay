@@ -16,10 +16,12 @@ Grab the latest version from the
 
 The binaries are not code-signed yet, so Windows SmartScreen will warn on
 first launch — choose **More info → Run anyway**. If in doubt, see the
-installer's independent
-[VirusTotal analysis (v0.1.0)](https://www.virustotal.com/gui/file/a9c85d8d03664f748b92dca374f47eb0892a73cf73005962e29c076570760d02/behavior)
-— and since the code is open source, you can always audit and build it
-yourself with `npm run dist`.
+installer's independent VirusTotal
+[detection results](https://www.virustotal.com/gui/file/a9c85d8d03664f748b92dca374f47eb0892a73cf73005962e29c076570760d02/detection)
+and
+[behavior analysis](https://www.virustotal.com/gui/file/a9c85d8d03664f748b92dca374f47eb0892a73cf73005962e29c076570760d02/behavior)
+(v0.1.0) — and since the code is open source, you can always audit and build
+it yourself with `npm run dist`.
 
 ## Features
 
